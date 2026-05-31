@@ -131,7 +131,7 @@ async def claude_proxy(req: ClaudeRequest):
         raise HTTPException(503, "ANTHROPIC_API_KEY not configured on server")
 
     payload = {
-        "model":      "claude-sonnet-4-5-20250514",
+        "model":      "claude-sonnet-4-5",
         "max_tokens": 900,
         "system":     req.system,
         "messages":   [{"role": "user", "content": req.user}],
