@@ -12,7 +12,7 @@
     :root {
       --navy:      #1A2744;
       --navy-lt:   #243159;
-      --blue:      #2563EB;
+      --blue:      #2187c3;
       --blue-dk:   #1A4FA8;
       --blue-lt:   #EEF4FF;
       --orange:    #F5821F;
@@ -1335,32 +1335,30 @@ function renderCollection() {
 
   const caughtMap=new Map(collection.map(b=>[b.scientific_name,b]));
 
+  // ── Caught birds first, grouped by rarity ──
   RARITY_SECTIONS.forEach(({key,label,dotColor})=>{
-    const birds=filtered.filter(b=>b.rarity===key);
-    if (!birds.length) return;
+    const caught=filtered.filter(b=>b.rarity===key&&caughtMap.has(b.sci));
+    if (!caught.length) return;
+    addSectionHeader(grid, label, dotColor);
+    caught.forEach(bird=>{
+      const entry=caughtMap.get(bird.sci);
+      const date=new Date(entry.caught_at).toLocaleDateString('nl-NL',{day:'numeric',month:'short'});
+      const card=document.createElement('div'); card.className='bird-card caught';
+      card.innerHTML=`<div class="bird-card-img">${entry.image_url?`<img src="${escHtml(entry.image_url)}" alt="${escHtml(bird.nl)}" loading="lazy">`:''}</div><div class="bird-card-body"><div class="bird-card-name">${escHtml(bird.nl)}</div><div class="bird-card-date">${date}</div></div>`;
+      grid.appendChild(card);
+    });
+  });
 
-    const caught=birds.filter(b=>caughtMap.has(b.sci));
-    const locked=birds.filter(b=>!caughtMap.has(b.sci));
-
-    if (caught.length) {
-      addSectionHeader(grid, label, dotColor);
-      caught.forEach(bird=>{
-        const entry=caughtMap.get(bird.sci);
-        const date=new Date(entry.caught_at).toLocaleDateString('nl-NL',{day:'numeric',month:'short'});
-        const card=document.createElement('div'); card.className='bird-card caught';
-        card.innerHTML=`<div class="bird-card-img">${entry.image_url?`<img src="${escHtml(entry.image_url)}" alt="${escHtml(bird.nl)}" loading="lazy">`:''}</div><div class="bird-card-body"><div class="bird-card-name">${escHtml(bird.nl)}</div><div class="bird-card-date">${date}</div></div>`;
-        grid.appendChild(card);
-      });
-    }
-
-    if (locked.length) {
-      addSectionHeader(grid, caught.length ? `${label} — not found` : 'not found', '#94A3B8');
-      locked.forEach(bird=>{
-        const card=document.createElement('div'); card.className='bird-card locked';
-        card.innerHTML=`<div class="bird-card-img"><div class="lock-icon">🔒</div></div><div class="bird-card-body"><div class="bird-card-name">${escHtml(bird.nl)}</div></div>`;
-        grid.appendChild(card);
-      });
-    }
+  // ── Not found below, grouped by rarity ──
+  RARITY_SECTIONS.forEach(({key,label,dotColor})=>{
+    const locked=filtered.filter(b=>b.rarity===key&&!caughtMap.has(b.sci));
+    if (!locked.length) return;
+    addSectionHeader(grid, 'not found — '+label, '#94A3B8');
+    locked.forEach(bird=>{
+      const card=document.createElement('div'); card.className='bird-card locked';
+      card.innerHTML=`<div class="bird-card-img"><div class="lock-icon">🔒</div></div><div class="bird-card-body"><div class="bird-card-name">${escHtml(bird.nl)}</div></div>`;
+      grid.appendChild(card);
+    });
   });
 }
 
