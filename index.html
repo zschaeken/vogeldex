@@ -784,7 +784,7 @@ navigator.geolocation?.getCurrentPosition(
 // Check if BirdNET server is running
 async function checkBirdNET() {
   try {
-    const r = await fetch('http://localhost:8765/health', { signal: AbortSignal.timeout(2000) });
+    const r = await fetch(`${BIRDNET_SERVER}/health`, { signal: AbortSignal.timeout(5000) });
     birdnetOnline = r.ok;
   } catch { birdnetOnline = false; }
   const badge = document.getElementById('birdnet-badge');
