@@ -115,24 +115,47 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 14px 20px 12px;
+      padding: 18px 20px 10px;
       background: var(--bg);
+      position: relative;
     }
+    /* Centered location pill */
     .top-bar-loc {
+      position: absolute;
+      left: 50%; transform: translateX(-50%);
       display: flex; align-items: center; gap: 5px;
-      font-size: 13px; font-weight: 600; color: var(--text2);
+      background: var(--bg2);
+      border: 1px solid var(--sep);
+      border-radius: 99px;
+      padding: 5px 12px 5px 9px;
+      font-size: 12px; font-weight: 600; color: var(--text2);
+      white-space: nowrap;
+      max-width: 200px;
     }
-    .top-bar-loc svg { width: 13px; height: 13px; fill: var(--blue); flex-shrink: 0; }
+    .top-bar-loc svg { width: 12px; height: 12px; fill: var(--blue); flex-shrink: 0; }
+    #top-location { overflow: hidden; text-overflow: ellipsis; }
     .top-bar-welcome {
       font-size: 13px; font-weight: 500; color: var(--text2);
     }
     .top-bar-gear {
-      width: 34px; height: 34px; border-radius: 50%;
+      width: 36px; height: 36px; border-radius: 50%;
       background: var(--bg2);
       display: flex; align-items: center; justify-content: center;
       border: 1px solid var(--sep);
+      transition: background .15s;
     }
+    .top-bar-gear:active { background: var(--bg3); }
     .top-bar-gear svg { width: 17px; height: 17px; fill: var(--text2); }
+    /* Left greeting */
+    .top-bar-greeting {
+      display: flex; flex-direction: column;
+    }
+    .top-bar-greeting .greet-label {
+      font-size: 11px; font-weight: 500; color: var(--text3); line-height: 1;
+    }
+    .top-bar-greeting .greet-name {
+      font-size: 14px; font-weight: 700; color: var(--text); line-height: 1.3;
+    }
 
     /* Hero */
     .hero-area {
@@ -200,15 +223,19 @@
     /* Record button */
     .record-wrap { position: relative; margin-bottom: 18px; }
     #record-btn {
-      width: 92px; height: 92px; border-radius: 50%;
+      width: 86px; height: 86px; border-radius: 50%;
       background: var(--blue);
-      color: #fff; font-size: 36px;
+      color: #fff;
       display: flex; align-items: center; justify-content: center;
-      box-shadow: 0 4px 20px rgba(33,135,195,.4);
+      box-shadow: 0 4px 24px rgba(33,135,195,.45);
       position: relative; z-index: 1;
-      transition: transform .15s cubic-bezier(.34,1.56,.64,1), box-shadow .15s;
+      transition: transform .15s cubic-bezier(.34,1.56,.64,1), box-shadow .15s, background .2s;
       animation: btn-breathe 3s ease-in-out infinite;
     }
+    #record-btn svg { width: 34px; height: 34px; fill: #fff; transition: transform .2s; pointer-events: none; }
+    #record-btn .stop-icon { display: none; }
+    #record-btn.recording .mic-icon { display: none; }
+    #record-btn.recording .stop-icon { display: block; }
     @keyframes btn-breathe {
       0%, 100% { box-shadow: 0 4px 20px rgba(33,135,195,.4); }
       50%       { box-shadow: 0 6px 32px rgba(33,135,195,.65); }
@@ -619,11 +646,17 @@
   <div id="screen-record" class="screen active">
 
     <div class="top-bar">
+      <!-- Left: greeting -->
+      <div class="top-bar-greeting">
+        <span class="greet-label">Good morning</span>
+        <span class="greet-name">Bird Watcher 🐦</span>
+      </div>
+      <!-- Center: location pill -->
       <div class="top-bar-loc">
         <svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
-        <span id="top-location">Location</span>
+        <span id="top-location">Locating…</span>
       </div>
-      <span class="top-bar-welcome" id="top-welcome">Welcome</span>
+      <!-- Right: settings -->
       <button class="top-bar-gear" aria-label="Settings">
         <svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94s-.02-.64-.07-.94l2.03-1.58a.49.49 0 0 0 .12-.61l-1.92-3.32a.49.49 0 0 0-.59-.22l-2.39.96a6.96 6.96 0 0 0-1.62-.94l-.36-2.54a.484.484 0 0 0-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96a.47.47 0 0 0-.59.22L2.74 8.87a.47.47 0 0 0 .12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58a.49.49 0 0 0-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32a.47.47 0 0 0-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
       </button>
@@ -659,7 +692,19 @@
         <div class="pulse-ring" id="ring1"></div>
         <div class="pulse-ring" id="ring2"></div>
         <div class="pulse-ring" id="ring3"></div>
-        <button id="record-btn" aria-label="Record">🎙️</button>
+        <button id="record-btn" aria-label="Record">
+          <!-- Mic icon -->
+          <svg class="mic-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <rect x="9" y="2" width="6" height="11" rx="3" fill="white"/>
+            <path d="M5 11a7 7 0 0 0 14 0" stroke="white" stroke-width="2" stroke-linecap="round" fill="none"/>
+            <line x1="12" y1="18" x2="12" y2="22" stroke="white" stroke-width="2" stroke-linecap="round"/>
+            <line x1="9" y1="22" x2="15" y2="22" stroke="white" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+          <!-- Stop icon (shown while recording) -->
+          <svg class="stop-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <rect x="6" y="6" width="12" height="12" rx="2.5" fill="white"/>
+          </svg>
+        </button>
       </div>
 
       <div id="record-timer"></div>
@@ -1032,6 +1077,14 @@ function startIdleWave() {
   }
   idleFrame = requestAnimationFrame(draw);
 }
+// ── Dynamic greeting ──────────────────────────────────────────
+(function() {
+  const h = new Date().getHours();
+  const label = h < 12 ? 'Good morning' : h < 18 ? 'Good afternoon' : 'Good evening';
+  const el = document.querySelector('.greet-label');
+  if (el) el.textContent = label;
+})();
+
 startIdleWave(); // kick off on page load
 
 recordBtn.addEventListener('click', () => { if (isRecording) stopRecording(); else startRecording(); });
@@ -1090,7 +1143,7 @@ async function startRecording() {
   isRecording = true;
   const MAX=20, t0=performance.now();
 
-  recordBtn.textContent = '⏹'; recordBtn.classList.add('recording');
+  recordBtn.classList.add('recording');
   timerEl.textContent = MAX+'s'; timerEl.classList.add('recording');
   hintEl.textContent = 'Opnemen… tik om te stoppen';
   [ring1,ring2,ring3].forEach(r => r.classList.add('active','recording'));
@@ -1106,7 +1159,7 @@ function stopRecording() {
   if (!isRecording) return;
   clearInterval(recordTimer); isRecording=false; cancelAnimationFrame(animFrame);
   if (mediaRecorder?.state !== 'inactive') mediaRecorder?.stop();
-  recordBtn.textContent='🎙️'; recordBtn.classList.remove('recording');
+  recordBtn.classList.remove('recording');
   timerEl.textContent=''; timerEl.classList.remove('recording');
   hintEl.innerHTML='Verwerken&hellip;';
   [ring1,ring2,ring3].forEach(r=>r.classList.remove('active','recording'));
