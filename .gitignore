@@ -1,0 +1,12 @@
+__pycache__/
+*.pyc
+*.pem
+*.key
+.env
+ffmpeg.exe
+ffprobe.exe
+*.tmp
+.DS_Store
+
+.vercel
+.env*

@@ -1,0 +1,10 @@
+ffmpeg.exe
+ffprobe.exe
+__pycache__/
+*.pyc
+*.pem
+*.key
+.env*
+server.py
+requirements.txt
+make_cert.py
