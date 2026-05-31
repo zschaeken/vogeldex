@@ -4,657 +4,424 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <title>BirdDex 🐦</title>
+  <title>BirdDex</title>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
-      --navy:       #1A2744;
-      --navy-dk:    #111b33;
-      --navy-lt:    #243259;
-      --blue:       #2E7FD4;
-      --blue-lt:    #4B9AE8;
-      --orange:     #F5821F;
-      --orange-lt:  #FF9A3C;
-      --gold:       #FFB800;
-      --purple:     #9B5DE5;
-      --green:      #22C55E;
-      --red:        #EF4444;
-      --surface:    rgba(255,255,255,.07);
-      --surface2:   rgba(255,255,255,.12);
-      --surface3:   rgba(255,255,255,.18);
-      --text:       #FFFFFF;
-      --text2:      rgba(255,255,255,.65);
-      --text3:      rgba(255,255,255,.35);
-      --sep:        rgba(255,255,255,.1);
-      --nav-h:      80px;
-      --radius-sm:  10px;
-      --radius:     14px;
-      --radius-lg:  20px;
-      --shadow:     0 4px 20px rgba(0,0,0,.35);
-      --shadow-sm:  0 2px 10px rgba(0,0,0,.2);
+      --navy:    #1A2744;
+      --blue:    #2E7FD4;
+      --orange:  #F5821F;
+      --bg:      #FFFFFF;
+      --bg2:     #F4F6FA;
+      --text:    #1A2744;
+      --text2:   #6B7A99;
+      --nav-h:   72px;
     }
-    html, body {
-      height: 100%;
-      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif;
-      background: var(--navy-dk);
-      color: var(--text);
-      overscroll-behavior: none;
-      -webkit-font-smoothing: antialiased;
-    }
-    button { cursor: pointer; border: none; background: none; font-family: inherit; -webkit-tap-highlight-color: transparent; color: inherit; }
+    html, body { height: 100%; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f0f2f5; overscroll-behavior: none; -webkit-font-smoothing: antialiased; }
+    button { cursor: pointer; border: none; background: none; font-family: inherit; -webkit-tap-highlight-color: transparent; }
     img { display: block; }
+    #app { max-width: 430px; margin: 0 auto; height: 100%; display: flex; flex-direction: column; position: relative; overflow: hidden; background: var(--bg); }
 
-    #app { max-width: 430px; margin: 0 auto; height: 100%; display: flex; flex-direction: column; position: relative; overflow: hidden; background: var(--navy); }
-
-    /* Screens */
-    .screen { flex: 1; overflow-y: auto; padding-bottom: calc(var(--nav-h) + 24px); display: none; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+    .screen { flex: 1; overflow-y: auto; padding-bottom: calc(var(--nav-h) + 16px); display: none; -webkit-overflow-scrolling: touch; scrollbar-width: none; background: var(--bg); }
     .screen::-webkit-scrollbar { display: none; }
     .screen.active { display: block; }
 
-    /* ── Floating pill bottom nav ── */
-    #nav-outer {
-      position: absolute; bottom: 0; left: 0; right: 0;
-      padding: 0 20px 18px; pointer-events: none; z-index: 50; flex-shrink: 0;
-    }
+    /* ── Floating pill nav ── */
+    #nav-outer { position: absolute; bottom: 0; left: 0; right: 0; padding: 0 16px 16px; z-index: 50; pointer-events: none; }
     #bottom-nav {
       pointer-events: all;
-      background: var(--navy-dk);
-      border-radius: 28px;
+      background: var(--navy);
+      border-radius: 32px;
       height: 60px;
-      display: flex;
-      align-items: center;
-      box-shadow: 0 8px 32px rgba(0,0,0,.5), 0 0 0 1px rgba(255,255,255,.07);
-      padding: 4px 8px;
+      display: flex; align-items: center;
+      padding: 6px 10px;
+      box-shadow: 0 8px 32px rgba(26,39,68,.35);
     }
     .nav-btn {
-      flex: 1; display: flex; flex-direction: column;
-      align-items: center; justify-content: center;
-      gap: 3px; padding: 6px 4px;
-      font-size: 10px; font-weight: 600;
-      color: var(--text3); transition: color .18s;
-      letter-spacing: .2px; border-radius: 22px;
+      flex: 1; display: flex; align-items: center; justify-content: center;
+      height: 100%; border-radius: 24px;
+      transition: background .18s;
     }
-    .nav-btn .nav-icon { font-size: 20px; line-height: 1; }
-    .nav-btn.active { color: var(--blue); background: rgba(46,127,212,.13); }
+    .nav-btn svg { width: 26px; height: 26px; fill: rgba(255,255,255,.45); transition: fill .18s; }
+    .nav-btn.active { background: rgba(255,255,255,.12); }
+    .nav-btn.active svg { fill: #fff; }
 
     /* ══════════════════════════════
        RECORD SCREEN
     ══════════════════════════════ */
-    #screen-record { background: var(--navy); position: relative; overflow: hidden; }
-
-    /* Animated bg blobs */
-    #bg-blobs { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
-    .blob {
-      position: absolute; border-radius: 50%;
-      filter: blur(60px); opacity: .18;
-      animation: blob-float 12s ease-in-out infinite alternate;
-    }
-    .blob-1 { width: 320px; height: 320px; background: var(--blue); top: -80px; left: -80px; animation-duration: 14s; }
-    .blob-2 { width: 260px; height: 260px; background: var(--orange); top: 40%; right: -60px; animation-duration: 10s; animation-delay: -4s; }
-    .blob-3 { width: 200px; height: 200px; background: var(--blue-lt); bottom: 10%; left: 10%; animation-duration: 16s; animation-delay: -8s; }
-    @keyframes blob-float { from { transform: translate(0,0) scale(1); } to { transform: translate(20px,30px) scale(1.1); } }
+    #screen-record { background: var(--bg); }
 
     /* Top bar */
     .top-bar {
-      position: relative; z-index: 2;
       display: flex; align-items: center; justify-content: space-between;
-      padding: 52px 20px 0;
+      padding: 48px 18px 14px;
+      background: var(--bg);
     }
-    .top-bar-loc {
-      font-size: 12px; font-weight: 600; color: var(--text2);
-      display: flex; align-items: center; gap: 4px;
-    }
-    .top-bar-loc span { font-size: 13px; }
-    .top-bar-title {
-      font-size: 18px; font-weight: 800;
-      color: var(--text); letter-spacing: .5px;
-      text-transform: uppercase;
-    }
-    .top-bar-btn {
-      width: 34px; height: 34px; border-radius: 50%;
-      background: var(--surface); display: flex; align-items: center; justify-content: center;
-      font-size: 16px;
+    .top-bar-loc { font-size: 13px; font-weight: 600; color: var(--text2); }
+    .top-bar-welcome { font-size: 13px; font-weight: 500; color: var(--text2); }
+    .top-bar-gear {
+      width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;
+      font-size: 18px; color: var(--text2);
     }
 
     /* Hero */
-    #record-content {
-      position: relative; z-index: 1;
-      display: flex; flex-direction: column; align-items: center;
-      padding: 28px 24px 32px;
-    }
-
-    /* Circular logo */
-    .hero-logo {
-      width: 104px; height: 104px; border-radius: 50%;
-      background: linear-gradient(135deg, var(--blue) 0%, var(--navy-lt) 100%);
-      display: flex; flex-direction: column; align-items: center; justify-content: center;
-      box-shadow: 0 0 0 4px rgba(46,127,212,.25), 0 8px 32px rgba(46,127,212,.3);
-      margin-bottom: 14px;
-    }
-    .hero-logo .logo-bird { font-size: 44px; line-height: 1; }
-    .hero-tagline {
-      font-size: 11px; font-weight: 700; color: var(--text2);
-      letter-spacing: 2px; text-transform: uppercase;
-      margin-bottom: 32px; text-align: center;
-    }
-
-    /* Waveform — 24 bars, Shazam-style */
-    #waveform {
-      width: 220px; height: 44px;
+    .hero-area {
+      width: 100%; height: 220px; position: relative; overflow: hidden;
       display: flex; align-items: center; justify-content: center;
-      gap: 2.5px; margin-bottom: 28px;
+    }
+    .hero-bg {
+      position: absolute; inset: 0;
+      background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="430" height="220"><defs><filter id="blur"><feGaussianBlur stdDeviation="8"/></filter></defs><rect width="430" height="220" fill="%2387CEEB"/><ellipse cx="215" cy="260" rx="260" ry="120" fill="%232d8a4f" filter="url(%23blur)"/><circle cx="60" cy="80" r="80" fill="%2345a058" opacity=".7" filter="url(%23blur)"/><circle cx="370" cy="60" r="70" fill="%233a9455" opacity=".6" filter="url(%23blur)"/><circle cx="215" cy="30" r="90" fill="%2387CEEB" opacity=".8" filter="url(%23blur)"/></svg>') center/cover;
+    }
+    /* Sparkle */
+    .hero-sparkle {
+      position: absolute; bottom: 14px; right: 16px;
+      color: rgba(255,255,255,.7); font-size: 16px; pointer-events: none;
+    }
+    /* The logo */
+    .birddex-logo { position: relative; z-index: 1; }
+    .birddex-logo svg { width: 148px; height: 172px; }
+
+    /* Record section */
+    .record-section {
+      display: flex; flex-direction: column; align-items: center;
+      padding: 28px 20px 20px; background: var(--bg);
+    }
+
+    /* Waveform */
+    #waveform {
+      display: flex; align-items: center; justify-content: center;
+      gap: 2px; height: 48px; width: 260px; margin-bottom: 24px;
     }
     .wave-bar {
-      width: 2.5px; border-radius: 99px;
-      background: var(--blue-lt); opacity: .35;
+      width: 3px; border-radius: 99px;
+      background: var(--navy); opacity: .75;
       height: 5px; transition: height .08s;
+      flex-shrink: 0;
     }
-    .wave-bar.active { opacity: .9; animation: wave-dance .5s ease-in-out infinite alternate; }
-    .wave-bar:nth-child(2)  { animation-delay:.04s }
-    .wave-bar:nth-child(3)  { animation-delay:.08s }
-    .wave-bar:nth-child(4)  { animation-delay:.12s }
-    .wave-bar:nth-child(5)  { animation-delay:.16s }
-    .wave-bar:nth-child(6)  { animation-delay:.20s }
-    .wave-bar:nth-child(7)  { animation-delay:.24s }
-    .wave-bar:nth-child(8)  { animation-delay:.20s }
-    .wave-bar:nth-child(9)  { animation-delay:.16s }
-    .wave-bar:nth-child(10) { animation-delay:.12s }
-    .wave-bar:nth-child(11) { animation-delay:.08s }
-    .wave-bar:nth-child(12) { animation-delay:.04s }
-    .wave-bar:nth-child(13) { animation-delay:.02s }
-    .wave-bar:nth-child(14) { animation-delay:.04s }
-    .wave-bar:nth-child(15) { animation-delay:.08s }
-    .wave-bar:nth-child(16) { animation-delay:.12s }
-    .wave-bar:nth-child(17) { animation-delay:.16s }
-    .wave-bar:nth-child(18) { animation-delay:.20s }
-    .wave-bar:nth-child(19) { animation-delay:.24s }
-    .wave-bar:nth-child(20) { animation-delay:.20s }
-    .wave-bar:nth-child(21) { animation-delay:.16s }
-    .wave-bar:nth-child(22) { animation-delay:.12s }
-    .wave-bar:nth-child(23) { animation-delay:.08s }
-    .wave-bar:nth-child(24) { animation-delay:.04s }
-    @keyframes wave-dance { from { height: 4px; } to { height: 36px; } }
+    .wave-bar.active { opacity: 1; animation: wd .5s ease-in-out infinite alternate; }
+    .wave-bar:nth-child(2n)   { animation-delay: .05s; }
+    .wave-bar:nth-child(3n)   { animation-delay: .10s; }
+    .wave-bar:nth-child(4n)   { animation-delay: .15s; }
+    .wave-bar:nth-child(5n)   { animation-delay: .20s; }
+    @keyframes wd { from { height: 4px; } to { height: 40px; } }
 
     /* Record button */
-    .record-wrap { position: relative; }
+    .record-wrap { position: relative; margin-bottom: 16px; }
     #record-btn {
-      width: 96px; height: 96px; border-radius: 50%;
-      background: linear-gradient(135deg, var(--blue) 0%, var(--blue-lt) 100%);
-      color: #fff; font-size: 38px;
+      width: 88px; height: 88px; border-radius: 50%;
+      background: var(--blue);
+      color: #fff; font-size: 34px;
       display: flex; align-items: center; justify-content: center;
-      box-shadow: 0 6px 28px rgba(46,127,212,.6), 0 0 0 6px rgba(46,127,212,.15);
-      position: relative; z-index: 1;
+      box-shadow: 0 4px 20px rgba(46,127,212,.45);
       transition: transform .12s cubic-bezier(.34,1.56,.64,1), box-shadow .12s;
+      position: relative; z-index: 1;
     }
-    #record-btn:active { transform: scale(.91); box-shadow: 0 2px 12px rgba(46,127,212,.35); }
-    #record-btn.recording {
-      background: linear-gradient(135deg, var(--red) 0%, #ff6b6b 100%);
-      box-shadow: 0 6px 28px rgba(239,68,68,.55), 0 0 0 6px rgba(239,68,68,.15);
-    }
-
-    /* Pulse rings */
+    #record-btn:active { transform: scale(.91); }
+    #record-btn.recording { background: #e53935; box-shadow: 0 4px 20px rgba(229,57,53,.45); }
     .pulse-ring {
-      position: absolute; top: 50%; left: 50%;
-      transform: translate(-50%,-50%);
-      width: 96px; height: 96px; border-radius: 50%;
+      position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%);
+      width: 88px; height: 88px; border-radius: 50%;
       border: 2px solid var(--blue); opacity: 0;
     }
-    .pulse-ring.active { animation: pulse-out 1.8s ease-out infinite; }
+    .pulse-ring.active { animation: po 1.8s ease-out infinite; }
     .pulse-ring:nth-child(2).active { animation-delay: .6s; }
     .pulse-ring:nth-child(3).active { animation-delay: 1.2s; }
-    @keyframes pulse-out {
-      0%   { transform: translate(-50%,-50%) scale(1); opacity: .6; }
-      100% { transform: translate(-50%,-50%) scale(2.5); opacity: 0; }
-    }
-    .pulse-ring.recording { border-color: var(--red); }
+    @keyframes po { 0%{transform:translate(-50%,-50%) scale(1);opacity:.5} 100%{transform:translate(-50%,-50%) scale(2.4);opacity:0} }
+    .pulse-ring.recording { border-color: #e53935; }
 
-    #record-timer {
-      font-size: 16px; font-weight: 700; color: var(--blue);
-      height: 22px; margin-top: 18px; letter-spacing: .5px;
-    }
-    #record-timer.recording { color: var(--red); }
-    #record-hint {
-      font-size: 14px; color: var(--text2); text-align: center;
-      max-width: 220px; line-height: 1.5; margin-top: 6px; font-weight: 400;
-    }
-    #birdnet-badge {
-      margin-top: 10px; font-size: 11px; font-weight: 700;
-      color: var(--text3); letter-spacing: .5px; transition: color .3s;
-    }
+    #record-timer { font-size: 16px; font-weight: 700; color: var(--blue); height: 20px; letter-spacing: .3px; }
+    #record-timer.recording { color: #e53935; }
+    #record-hint { font-size: 14px; color: var(--text2); text-align: center; line-height: 1.5; margin-top: 6px; }
+    #birdnet-badge { margin-top: 10px; font-size: 11px; font-weight: 700; color: var(--text2); letter-spacing: .3px; }
 
     /* Loading overlay */
     #loading-overlay {
-      position: absolute; inset: 0; z-index: 10;
-      background: rgba(17,27,51,.88);
-      backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
-      display: none; flex-direction: column;
-      align-items: center; justify-content: center; gap: 16px;
+      position: absolute; inset: 0; z-index: 20;
+      background: rgba(255,255,255,.9);
+      backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+      display: none; flex-direction: column; align-items: center; justify-content: center; gap: 14px;
     }
     #loading-overlay.show { display: flex; }
-    .spinner {
-      width: 44px; height: 44px;
-      border: 3px solid rgba(255,255,255,.1);
-      border-top-color: var(--blue);
-      border-radius: 50%;
-      animation: spin .75s linear infinite;
-    }
+    .spinner { width: 40px; height: 40px; border: 3px solid #e0e5ef; border-top-color: var(--blue); border-radius: 50%; animation: spin .75s linear infinite; }
     @keyframes spin { to { transform: rotate(360deg); } }
-    #loading-text { font-size: 17px; font-weight: 700; color: var(--text); }
+    #loading-text { font-size: 16px; font-weight: 700; color: var(--text); }
     #loading-sub  { font-size: 13px; color: var(--text2); }
 
     /* ══════════════════════════════
        RESULT SCREEN
     ══════════════════════════════ */
-    #screen-result { background: var(--navy); }
-    #result-content { padding-bottom: 24px; }
-
-    #result-image-wrap {
-      width: 100%; aspect-ratio: 16/9;
-      background: var(--navy-lt); overflow: hidden; position: relative;
-    }
+    #screen-result { background: var(--bg); }
+    #result-image-wrap { width: 100%; aspect-ratio: 16/9; background: var(--bg2); overflow: hidden; position: relative; }
     #result-image { width: 100%; height: 100%; object-fit: cover; }
-    #result-image-placeholder {
-      position: absolute; inset: 0;
-      display: flex; align-items: center; justify-content: center;
-      background: linear-gradient(135deg, var(--navy-lt), var(--navy-dk));
-    }
-    .bird-svg-placeholder { width: 64px; height: 64px; opacity: .3; }
+    #result-image-placeholder { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg,#dce8f7,#edf4fd); }
 
     #result-info {
-      background: var(--surface);
-      margin: -18px 14px 0;
-      border-radius: var(--radius-lg);
-      padding: 18px 18px 14px;
-      box-shadow: var(--shadow);
-      position: relative; z-index: 1;
-      border: 1px solid var(--sep);
-      backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+      background: #fff; margin: -16px 14px 0; border-radius: 18px; padding: 16px 16px 12px;
+      box-shadow: 0 4px 20px rgba(0,0,0,.1); position: relative; z-index: 1;
+      border: 1px solid #eaecf0;
     }
-    .result-already {
-      position: absolute; top: 14px; right: 14px;
-      background: rgba(34,197,94,.15); color: var(--green);
-      border-radius: 99px; padding: 3px 10px;
-      font-size: 11px; font-weight: 700; display: none;
-    }
+    .result-already { position: absolute; top: 12px; right: 12px; background: #e8f5e9; color: #388e3c; border-radius: 99px; padding: 3px 10px; font-size: 11px; font-weight: 700; display: none; }
     .result-already.show { display: block; }
-    #result-name-nl  { font-size: 26px; font-weight: 800; color: var(--text); line-height: 1.1; letter-spacing: -.3px; }
-    #result-name-sci { font-size: 13px; font-style: italic; color: var(--text2); margin-top: 3px; }
-    #result-name-en  { font-size: 12px; color: var(--text3); margin-top: 1px; }
-
-    .badges-row { display: flex; gap: 6px; margin-top: 10px; flex-wrap: wrap; align-items: center; }
-    .rarity-badge {
-      border-radius: 99px; padding: 3px 10px;
-      font-size: 11px; font-weight: 700;
-    }
-    .rarity-common    { background: rgba(255,255,255,.12); color: var(--text2); }
-    .rarity-uncommon  { background: rgba(46,127,212,.2); color: var(--blue-lt); }
-    .rarity-rare      { background: rgba(155,93,229,.2); color: #c084fc; }
-    .rarity-legendary { background: linear-gradient(135deg,rgba(255,184,0,.25),rgba(245,130,31,.25)); color: var(--gold); }
-
+    #result-name-nl  { font-size: 24px; font-weight: 800; color: var(--text); line-height: 1.1; }
+    #result-name-sci { font-size: 13px; font-style: italic; color: var(--text2); margin-top: 2px; }
+    #result-name-en  { font-size: 12px; color: #aab0c0; margin-top: 1px; }
+    .badges-row { display: flex; gap: 6px; margin-top: 10px; flex-wrap: wrap; }
+    .rarity-badge { border-radius: 99px; padding: 3px 10px; font-size: 11px; font-weight: 700; }
+    .rarity-common    { background: #f0f2f7; color: var(--text2); }
+    .rarity-uncommon  { background: #e3f0fc; color: var(--blue); }
+    .rarity-rare      { background: #f3e8ff; color: #7c3aed; }
+    .rarity-legendary { background: #fff8e1; color: #e65100; }
     .confidence-wrap { margin-top: 12px; }
-    .confidence-label { font-size: 11px; color: var(--text2); margin-bottom: 5px; display: flex; justify-content: space-between; font-weight: 600; letter-spacing: .3px; }
-    .confidence-bar-bg { height: 5px; background: rgba(255,255,255,.1); border-radius: 99px; overflow: hidden; }
+    .confidence-label { font-size: 11px; color: var(--text2); margin-bottom: 5px; display: flex; justify-content: space-between; font-weight: 600; }
+    .confidence-bar-bg { height: 5px; background: #e8eaf0; border-radius: 99px; overflow: hidden; }
     .confidence-bar-fill { height: 100%; border-radius: 99px; transition: width .7s cubic-bezier(.4,0,.2,1); }
-    .conf-green  { background: linear-gradient(90deg, var(--green), #4ade80); }
-    .conf-orange { background: linear-gradient(90deg, var(--orange), var(--orange-lt)); }
-    .conf-red    { background: linear-gradient(90deg, var(--red), #f87171); }
-
-    .fun-fact {
-      margin-top: 12px;
-      background: rgba(46,127,212,.1);
-      border-radius: var(--radius-sm);
-      padding: 10px 12px;
-      font-size: 13px; line-height: 1.55; color: var(--text2);
-      border: 1px solid rgba(46,127,212,.2);
-    }
-    .fun-fact-icon { margin-right: 3px; }
-
+    .conf-green { background: #43a047; } .conf-orange { background: var(--orange); } .conf-red { background: #e53935; }
+    .fun-fact { margin-top: 12px; background: #f0f7ff; border-radius: 10px; padding: 10px 12px; font-size: 13px; line-height: 1.55; color: var(--text); border: 1px solid #d9eaf8; }
     .result-actions { display: flex; gap: 10px; margin: 12px 14px 0; }
-    .btn-catch {
-      flex: 2; background: linear-gradient(135deg, var(--blue), var(--blue-lt));
-      color: #fff; border-radius: var(--radius); padding: 14px;
-      font-size: 16px; font-weight: 700; text-align: center;
-      box-shadow: 0 4px 16px rgba(46,127,212,.4);
-      transition: transform .12s, box-shadow .12s;
-    }
+    .btn-catch { flex: 2; background: var(--blue); color: #fff; border-radius: 14px; padding: 14px; font-size: 16px; font-weight: 700; text-align: center; box-shadow: 0 3px 12px rgba(46,127,212,.35); transition: transform .12s; }
     .btn-catch:active { transform: scale(.96); }
-    .btn-catch.already { background: rgba(34,197,94,.15); color: var(--green); box-shadow: none; border: 1px solid rgba(34,197,94,.25); }
-    .btn-again {
-      flex: 1; background: var(--surface2); color: var(--text);
-      border-radius: var(--radius); padding: 14px;
-      font-size: 14px; font-weight: 600; text-align: center;
-      border: 1px solid var(--sep);
-    }
+    .btn-catch.already { background: #e8f5e9; color: #388e3c; box-shadow: none; }
+    .btn-again { flex: 1; background: var(--bg2); color: var(--text); border-radius: 14px; padding: 14px; font-size: 14px; font-weight: 600; text-align: center; }
     .btn-again:active { opacity: .6; }
 
-    /* Catch anim */
-    #catch-anim {
-      position: fixed; inset: 0; z-index: 100;
-      display: none; align-items: center; justify-content: center;
-      background: rgba(0,0,0,.6); flex-direction: column;
-      backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
-    }
+    #catch-anim { position: fixed; inset: 0; z-index: 100; display: none; align-items: center; justify-content: center; background: rgba(0,0,0,.5); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); }
     #catch-anim.show { display: flex; }
-    .catch-card {
-      background: var(--navy-lt); border-radius: 24px;
-      padding: 36px 44px; text-align: center;
-      box-shadow: var(--shadow), 0 0 0 1px var(--sep);
-      animation: card-pop .35s cubic-bezier(.34,1.56,.64,1);
-    }
-    @keyframes card-pop { from { transform: scale(.5); opacity: 0; } to { transform: scale(1); opacity: 1; } }
-    .catch-emoji { font-size: 52px; line-height: 1; }
-    .catch-title { font-size: 20px; font-weight: 800; color: var(--text); margin-top: 10px; }
-    .catch-sub   { font-size: 13px; color: var(--text2); margin-top: 4px; }
+    .catch-card { background: #fff; border-radius: 24px; padding: 32px 40px; text-align: center; box-shadow: 0 16px 48px rgba(0,0,0,.2); animation: cpop .35s cubic-bezier(.34,1.56,.64,1); }
+    @keyframes cpop { from{transform:scale(.5);opacity:0} to{transform:scale(1);opacity:1} }
+    .catch-emoji { font-size: 48px; }
+    .catch-title { font-size: 18px; font-weight: 800; color: var(--text); margin-top: 8px; }
+    .catch-sub   { font-size: 13px; color: var(--text2); margin-top: 3px; }
 
     /* ══════════════════════════════
        COLLECTION SCREEN
     ══════════════════════════════ */
-    #screen-collection { background: var(--navy); }
+    #screen-collection { background: var(--bg); }
 
-    /* Collection top bar */
-    .col-header {
-      display: flex; align-items: center; justify-content: space-between;
-      padding: 52px 18px 14px;
-      position: sticky; top: 0; z-index: 10;
-      background: var(--navy);
+    .col-top {
+      padding: 48px 18px 10px;
+      background: var(--bg);
     }
-    .col-header-left h1 {
-      font-size: 26px; font-weight: 800; color: var(--text); letter-spacing: -.3px;
-    }
-    .col-header-left p {
-      font-size: 12px; color: var(--text2); margin-top: 1px; font-weight: 500;
-    }
-    #collection-count span { color: var(--blue); }
+    .col-title-row { display: flex; align-items: flex-start; justify-content: space-between; }
+    .col-title-row h1 { font-size: 26px; font-weight: 800; color: var(--text); }
+    #search-toggle { width: 36px; height: 36px; border-radius: 50%; background: var(--bg2); display: flex; align-items: center; justify-content: center; font-size: 17px; margin-top: 2px; border: 1px solid #e0e3eb; }
+    .col-count { font-size: 13px; color: var(--text2); font-weight: 500; margin-top: 2px; }
+    .col-count span { color: var(--blue); font-weight: 700; }
 
-    /* Search button & input */
-    .search-wrap { display: flex; align-items: center; gap: 8px; }
-    #search-toggle {
-      width: 36px; height: 36px; border-radius: 50%;
-      background: var(--surface2); display: flex; align-items: center; justify-content: center;
-      font-size: 16px; border: 1px solid var(--sep);
-      transition: background .2s;
-    }
-    #search-toggle.active { background: rgba(46,127,212,.25); border-color: rgba(46,127,212,.4); }
-    #search-bar {
-      overflow: hidden; max-height: 0; transition: max-height .25s ease, padding .25s ease;
-      padding: 0 16px;
-    }
-    #search-bar.open { max-height: 56px; padding: 0 16px 12px; }
-    #search-input {
-      width: 100%; padding: 10px 14px; border-radius: 99px;
-      background: var(--surface2); border: 1px solid var(--sep);
-      color: var(--text); font-size: 14px; font-family: inherit;
-      outline: none;
-    }
-    #search-input::placeholder { color: var(--text3); }
-    #search-input:focus { border-color: rgba(46,127,212,.5); background: var(--surface3); }
+    #search-bar { overflow: hidden; max-height: 0; transition: max-height .25s ease, padding .25s; padding: 0 18px; }
+    #search-bar.open { max-height: 56px; padding: 8px 18px; }
+    #search-input { width: 100%; padding: 9px 14px; border-radius: 99px; background: var(--bg2); border: 1px solid #dde1eb; color: var(--text); font-size: 14px; font-family: inherit; outline: none; }
+    #search-input:focus { border-color: var(--blue); }
 
-    /* Rarity section headers */
-    .rarity-section-header {
-      display: flex; align-items: center; gap: 8px;
-      padding: 14px 16px 8px; font-size: 11px; font-weight: 800;
-      letter-spacing: 1.2px; text-transform: uppercase; color: var(--text2);
-    }
-    .rarity-section-header .dot {
-      width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0;
+    /* Section headers */
+    .rarity-section-label {
+      padding: 12px 16px 6px; font-size: 12px; font-weight: 700;
+      color: var(--text2); letter-spacing: .3px;
     }
 
-    /* 3-column grid */
-    #bird-grid {
-      display: grid; grid-template-columns: repeat(3, 1fr);
-      gap: 8px; padding: 0 12px 8px;
-    }
-    .bird-card {
-      background: var(--surface); border-radius: var(--radius-sm);
-      overflow: hidden; cursor: pointer;
-      transition: transform .15s, opacity .15s;
-      border: 1px solid var(--sep);
-    }
-    .bird-card:active { transform: scale(.94); opacity: .8; }
-    .bird-card-img {
-      width: 100%; aspect-ratio: 1/1;
-      background: var(--navy-lt);
-      display: flex; align-items: center; justify-content: center;
-      overflow: hidden;
-    }
+    /* 3-col grid */
+    #bird-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; padding: 0 12px 8px; }
+    .bird-card { border-radius: 10px; overflow: hidden; cursor: pointer; transition: transform .15s; }
+    .bird-card:active { transform: scale(.93); }
+    .bird-card-img { width: 100%; aspect-ratio: 1/1; display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden; }
     .bird-card-img img { width: 100%; height: 100%; object-fit: cover; }
-    /* Locked card (not caught yet) */
-    .bird-card.locked { opacity: .4; }
-    .bird-card.locked .bird-card-img { filter: grayscale(1); }
-    .bird-card-body { padding: 7px 7px 8px; }
-    .bird-card-name { font-size: 10px; font-weight: 700; color: var(--text); line-height: 1.25; }
-    .bird-card-sci  { font-size: 9px; font-style: italic; color: var(--text3); margin-top: 1px; display: none; }
-    .bird-card-meta { margin-top: 4px; }
-    .bird-card-date { font-size: 9px; color: var(--text3); }
+    /* Caught = blue tint */
+    .bird-card.caught .bird-card-img { background: var(--blue); }
+    /* Not caught = dark navy */
+    .bird-card.locked .bird-card-img { background: var(--navy); }
+    .bird-card-body { padding: 5px 6px 6px; background: #fff; }
+    .bird-card.locked .bird-card-body { background: var(--navy); }
+    .bird-card-name { font-size: 9.5px; font-weight: 700; color: var(--text); line-height: 1.2; }
+    .bird-card.locked .bird-card-name { color: rgba(255,255,255,.5); }
+    .bird-card-date { font-size: 8.5px; color: var(--text2); margin-top: 2px; }
+    .bird-card.locked .bird-card-date { color: rgba(255,255,255,.25); }
+    .lock-icon { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 22px; opacity: .35; }
 
-    /* Lock icon */
-    .lock-overlay {
-      position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
-      font-size: 20px; opacity: .6;
-    }
-    .bird-card-img { position: relative; }
-
-    #empty-state {
-      display: none; flex-direction: column; align-items: center;
-      justify-content: center; padding: 72px 32px;
-      text-align: center; gap: 14px;
-    }
+    #empty-state { display: none; flex-direction: column; align-items: center; justify-content: center; padding: 64px 28px; text-align: center; gap: 12px; }
     #empty-state.show { display: flex; }
-    .empty-icon { font-size: 60px; }
+    .empty-icon { font-size: 56px; }
     .empty-title { font-size: 20px; font-weight: 800; color: var(--text); }
     .empty-sub   { font-size: 14px; color: var(--text2); line-height: 1.6; }
-    .empty-btn {
-      background: linear-gradient(135deg, var(--blue), var(--blue-lt));
-      color: #fff; border-radius: 99px; padding: 13px 32px;
-      font-size: 15px; font-weight: 700;
-      box-shadow: 0 4px 16px rgba(46,127,212,.4);
-    }
+    .empty-btn   { background: var(--blue); color: #fff; border-radius: 99px; padding: 12px 28px; font-size: 15px; font-weight: 700; box-shadow: 0 3px 12px rgba(46,127,212,.35); }
 
     /* ══════════════════════════════
        STATS SCREEN
     ══════════════════════════════ */
-    #screen-stats { background: var(--navy); }
+    #screen-stats { background: var(--bg); }
+    .stats-top { padding: 48px 18px 14px; }
+    .stats-top h1 { font-size: 26px; font-weight: 800; color: var(--text); }
+    .stats-top p  { font-size: 13px; color: var(--text2); margin-top: 2px; }
 
-    .stats-header {
-      padding: 52px 18px 18px;
-    }
-    .stats-header h1 { font-size: 26px; font-weight: 800; color: var(--text); letter-spacing: -.3px; }
-    .stats-header p  { font-size: 12px; color: var(--text2); margin-top: 2px; font-weight: 500; }
+    .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 0 16px 4px; }
+    .stat-card { background: var(--bg2); border-radius: 14px; padding: 16px 14px; text-align: center; border: 1px solid #e8eaf0; }
+    .stat-card.wide { grid-column: span 2; text-align: left; display: flex; align-items: center; gap: 12px; }
+    .stat-value { font-size: 34px; font-weight: 800; color: var(--blue); line-height: 1; }
+    .stat-label { font-size: 11px; color: var(--text2); margin-top: 4px; font-weight: 600; text-transform: uppercase; letter-spacing: .4px; }
+    .stat-bird-name { font-size: 15px; font-weight: 800; color: var(--text); margin-top: 2px; }
+    .stat-icon { font-size: 32px; }
 
-    /* Hero stats row */
-    .stats-hero {
-      display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
-      padding: 0 16px 4px;
-    }
-    .stat-card {
-      background: var(--surface); border-radius: var(--radius);
-      padding: 16px 14px; text-align: center;
-      border: 1px solid var(--sep);
-    }
-    .stat-card.wide { grid-column: span 2; text-align: left; display: flex; align-items: center; gap: 14px; }
-    .stat-card.accent-blue { border-color: rgba(46,127,212,.3); background: rgba(46,127,212,.08); }
-    .stat-card.accent-orange { border-color: rgba(245,130,31,.3); background: rgba(245,130,31,.08); }
-    .stat-card.accent-gold { border-color: rgba(255,184,0,.3); background: rgba(255,184,0,.08); }
-    .stat-value { font-size: 36px; font-weight: 800; line-height: 1; letter-spacing: -.5px; }
-    .stat-value.blue  { color: var(--blue-lt); }
-    .stat-value.orange { color: var(--orange-lt); }
-    .stat-value.gold   { color: var(--gold); }
-    .stat-label { font-size: 11px; color: var(--text2); margin-top: 4px; font-weight: 600; letter-spacing: .3px; text-transform: uppercase; }
-    .stat-rarest-icon { font-size: 36px; flex-shrink: 0; }
-    .stat-rarest-info {}
-    .stat-rarest-label { font-size: 11px; color: var(--text2); font-weight: 600; letter-spacing: .3px; text-transform: uppercase; }
-    .stat-bird-name { font-size: 17px; font-weight: 800; color: var(--text); margin-top: 3px; }
-
-    /* Section cards */
-    .stats-section {
-      margin: 14px 16px 0;
-      background: var(--surface); border-radius: var(--radius);
-      padding: 16px; border: 1px solid var(--sep);
-    }
-    .stats-section h3 { font-size: 14px; font-weight: 800; color: var(--text); margin-bottom: 14px; letter-spacing: .2px; }
-
-    .bar-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+    .stats-section { margin: 12px 16px 0; background: var(--bg2); border-radius: 14px; padding: 14px; border: 1px solid #e8eaf0; }
+    .stats-section h3 { font-size: 13px; font-weight: 800; color: var(--text); margin-bottom: 12px; text-transform: uppercase; letter-spacing: .4px; }
+    .bar-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
     .bar-row:last-child { margin-bottom: 0; }
-    .bar-row-label {
-      font-size: 12px; font-weight: 600; color: var(--text2);
-      width: 90px; flex-shrink: 0;
-      display: flex; align-items: center; gap: 5px;
-    }
-    .rarity-dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
-    .dot-common    { background: rgba(255,255,255,.4); }
-    .dot-uncommon  { background: var(--blue-lt); }
-    .dot-rare      { background: #c084fc; }
-    .dot-legendary { background: var(--gold); }
-    .bar-track { flex: 1; height: 7px; background: rgba(255,255,255,.08); border-radius: 99px; overflow: hidden; }
-    .bar-fill  { height: 100%; border-radius: 99px; transition: width .6s cubic-bezier(.4,0,.2,1); min-width: 4px; }
-    .bar-common    { background: rgba(255,255,255,.4); }
-    .bar-uncommon  { background: linear-gradient(90deg, var(--blue), var(--blue-lt)); }
-    .bar-rare      { background: linear-gradient(90deg, #9b5de5, #c084fc); }
-    .bar-legendary { background: linear-gradient(90deg, var(--orange), var(--gold)); }
+    .bar-row-label { font-size: 12px; font-weight: 600; color: var(--text2); width: 88px; flex-shrink: 0; display: flex; align-items: center; gap: 5px; }
+    .rarity-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+    .dot-common    { background: var(--text2); }
+    .dot-uncommon  { background: var(--blue); }
+    .dot-rare      { background: #7c3aed; }
+    .dot-legendary { background: var(--orange); }
+    .bar-track { flex: 1; height: 7px; background: #dde1eb; border-radius: 99px; overflow: hidden; }
+    .bar-fill { height: 100%; border-radius: 99px; transition: width .6s cubic-bezier(.4,0,.2,1); min-width: 4px; }
+    .bar-common    { background: var(--text2); }
+    .bar-uncommon  { background: var(--blue); }
+    .bar-rare      { background: #7c3aed; }
+    .bar-legendary { background: var(--orange); }
     .bar-count { font-size: 12px; font-weight: 700; color: var(--text); width: 22px; text-align: right; }
 
-    /* Progress ring */
-    .progress-wrap {
-      display: flex; align-items: center; justify-content: center; gap: 20px;
-      margin-bottom: 4px;
-    }
-    .progress-ring-wrap { position: relative; width: 80px; height: 80px; flex-shrink: 0; }
-    .progress-ring-wrap svg { transform: rotate(-90deg); }
-    .progress-ring-bg { fill: none; stroke: rgba(255,255,255,.08); stroke-width: 7; }
-    .progress-ring-fill { fill: none; stroke: var(--blue); stroke-width: 7; stroke-linecap: round; transition: stroke-dashoffset .8s cubic-bezier(.4,0,.2,1); }
-    .progress-label {
-      position: absolute; inset: 0; display: flex; flex-direction: column;
-      align-items: center; justify-content: center;
-    }
-    .progress-pct { font-size: 16px; font-weight: 800; color: var(--text); }
-    .progress-sub { font-size: 9px; color: var(--text2); font-weight: 600; letter-spacing: .5px; text-transform: uppercase; }
-    .progress-text {}
-    .progress-text p { font-size: 13px; color: var(--text2); line-height: 1.6; }
-    .progress-text strong { color: var(--text); font-weight: 700; }
-
-    .recent-item {
-      display: flex; align-items: center; gap: 10px;
-      padding: 10px 0; border-bottom: 1px solid var(--sep);
-    }
+    .recent-item { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid #eaecf0; }
     .recent-item:last-child { border-bottom: none; padding-bottom: 0; }
-    .recent-thumb {
-      width: 42px; height: 42px; border-radius: 10px;
-      overflow: hidden; background: var(--navy-lt); flex-shrink: 0;
-    }
+    .recent-thumb { width: 40px; height: 40px; border-radius: 9px; overflow: hidden; background: var(--bg2); flex-shrink: 0; }
     .recent-thumb img { width: 100%; height: 100%; object-fit: cover; }
-    .recent-name  { font-size: 14px; font-weight: 700; color: var(--text); }
-    .recent-meta  { font-size: 11px; color: var(--text3); margin-top: 2px; }
+    .recent-name { font-size: 14px; font-weight: 700; color: var(--text); }
+    .recent-meta { font-size: 11px; color: var(--text2); margin-top: 1px; }
+
+    /* Progress ring */
+    .prog-wrap { display: flex; align-items: center; gap: 16px; }
+    .prog-ring-wrap { position: relative; width: 72px; height: 72px; flex-shrink: 0; }
+    .prog-ring-wrap svg { transform: rotate(-90deg); }
+    .prog-ring-bg   { fill: none; stroke: #dde1eb; stroke-width: 7; }
+    .prog-ring-fill { fill: none; stroke: var(--blue); stroke-width: 7; stroke-linecap: round; transition: stroke-dashoffset .8s cubic-bezier(.4,0,.2,1); }
+    .prog-label { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+    .prog-pct { font-size: 15px; font-weight: 800; color: var(--text); }
+    .prog-sub { font-size: 9px; font-weight: 700; color: var(--text2); letter-spacing: .5px; text-transform: uppercase; }
 
     /* Toast */
-    #toast {
-      position: fixed;
-      bottom: calc(var(--nav-h) + 32px);
-      left: 50%; transform: translateX(-50%) translateY(16px);
-      background: var(--navy-lt);
-      border: 1px solid var(--sep);
-      backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
-      color: var(--text); border-radius: 14px;
-      padding: 10px 18px; font-size: 13px; font-weight: 600;
-      z-index: 200; max-width: 300px; text-align: center;
-      opacity: 0; transition: opacity .2s, transform .2s; pointer-events: none;
-    }
+    #toast { position: fixed; bottom: calc(var(--nav-h) + 24px); left: 50%; transform: translateX(-50%) translateY(12px); background: var(--navy); color: #fff; border-radius: 12px; padding: 10px 18px; font-size: 13px; font-weight: 600; z-index: 200; max-width: 300px; text-align: center; opacity: 0; transition: opacity .2s, transform .2s; pointer-events: none; }
     #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
-    /* Bird picker */
-    #picker-overlay {
-      position: fixed; inset: 0; z-index: 150;
-      background: rgba(0,0,0,.6);
-      backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
-      display: none; align-items: flex-end; justify-content: center;
-    }
+    /* Picker */
+    #picker-overlay { position: fixed; inset: 0; z-index: 150; background: rgba(0,0,0,.45); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); display: none; align-items: flex-end; justify-content: center; }
     #picker-overlay.show { display: flex; }
-    #picker-sheet {
-      background: var(--navy-lt);
-      width: 100%; max-width: 430px;
-      border-radius: 24px 24px 0 0;
-      padding: 6px 16px 36px;
-      animation: slide-up .28s cubic-bezier(.4,0,.2,1);
-      border-top: 1px solid var(--sep);
-    }
-    @keyframes slide-up { from { transform: translateY(100%); } to { transform: translateY(0); } }
-    #picker-handle { width: 36px; height: 4px; background: var(--text3); border-radius: 99px; margin: 10px auto 14px; }
+    #picker-sheet { background: #fff; width: 100%; max-width: 430px; border-radius: 22px 22px 0 0; padding: 6px 16px 32px; animation: su .28s cubic-bezier(.4,0,.2,1); }
+    @keyframes su { from{transform:translateY(100%)} to{transform:translateY(0)} }
+    #picker-handle { width: 36px; height: 4px; background: #dde1eb; border-radius: 99px; margin: 10px auto 14px; }
     #picker-title { font-size: 16px; font-weight: 800; color: var(--text); }
     #picker-sub   { font-size: 13px; color: var(--text2); margin-top: 2px; margin-bottom: 12px; }
-    .picker-item {
-      display: flex; align-items: center; gap: 12px;
-      width: 100%; background: var(--surface);
-      border: 1px solid var(--sep);
-      border-radius: var(--radius); padding: 11px;
-      margin-bottom: 8px; text-align: left;
-      transition: opacity .15s;
-    }
+    .picker-item { display: flex; align-items: center; gap: 12px; width: 100%; background: var(--bg2); border-radius: 14px; padding: 11px; margin-bottom: 8px; text-align: left; transition: opacity .15s; }
     .picker-item:active { opacity: .6; }
-    .picker-thumb { width: 48px; height: 48px; border-radius: 10px; overflow: hidden; background: var(--navy-dk); flex-shrink: 0; }
+    .picker-thumb { width: 46px; height: 46px; border-radius: 10px; overflow: hidden; background: #dde1eb; flex-shrink: 0; }
     .picker-thumb img { width: 100%; height: 100%; object-fit: cover; }
     .picker-info { flex: 1; min-width: 0; }
     .picker-name { font-size: 14px; font-weight: 700; color: var(--text); }
     .picker-sci  { font-size: 11px; font-style: italic; color: var(--text2); margin-top: 1px; }
-    #picker-cancel {
-      width: 100%; margin-top: 6px;
-      background: var(--surface2); color: var(--blue-lt);
-      font-size: 15px; font-weight: 700;
-      padding: 14px; border-radius: var(--radius);
-      border: 1px solid var(--sep);
-    }
-    #picker-cancel:active { opacity: .6; }
-
-    /* api-banner hidden */
+    #picker-cancel { width: 100%; margin-top: 4px; background: var(--bg2); color: var(--blue); font-size: 15px; font-weight: 700; padding: 14px; border-radius: 14px; }
     #api-banner { display: none; }
   </style>
 </head>
 <body>
 <div id="app">
-
   <div id="api-banner"></div>
 
-  <!-- ── SCREEN: RECORD ─────────────────────────────────────── -->
+  <!-- ── SCREEN: RECORD ── -->
   <div id="screen-record" class="screen active">
-    <div id="bg-blobs">
-      <div class="blob blob-1"></div>
-      <div class="blob blob-2"></div>
-      <div class="blob blob-3"></div>
-    </div>
-
-    <!-- Top bar -->
     <div class="top-bar">
-      <div class="top-bar-loc">
-        <span>📍</span>
-        <span id="top-location">Locatie…</span>
-      </div>
-      <div class="top-bar-title">BirdDex</div>
-      <button class="top-bar-btn" aria-label="Instellingen">⚙️</button>
+      <span class="top-bar-loc" id="top-location">Location</span>
+      <span class="top-bar-welcome" id="top-welcome">Welcome</span>
+      <button class="top-bar-gear" aria-label="Settings">⚙</button>
     </div>
 
-    <div id="record-content">
-      <!-- Hero logo -->
-      <div class="hero-logo">
-        <div class="logo-bird">🐦</div>
+    <!-- Hero with blurred nature bg + logo -->
+    <div class="hero-area">
+      <div class="hero-bg"></div>
+      <div class="birddex-logo">
+        <!-- Inline SVG logo replicating the BIRDDEX badge -->
+        <svg viewBox="0 0 200 230" xmlns="http://www.w3.org/2000/svg" style="width:148px;height:172px">
+          <!-- Outer navy ring -->
+          <circle cx="100" cy="100" r="98" fill="#1A2744"/>
+          <!-- White inner -->
+          <circle cx="100" cy="100" r="89" fill="white"/>
+          <!-- Clip for scene -->
+          <defs>
+            <clipPath id="sc"><circle cx="100" cy="100" r="83"/></clipPath>
+          </defs>
+          <!-- Scene background -->
+          <g clip-path="url(#sc)">
+            <rect x="17" y="17" width="166" height="166" fill="#9CD8F0"/>
+            <!-- Ground -->
+            <ellipse cx="100" cy="160" rx="95" ry="42" fill="#5BBF6A"/>
+            <ellipse cx="100" cy="155" rx="85" ry="30" fill="#6DD97A"/>
+            <!-- Trees (bg) -->
+            <ellipse cx="25" cy="110" rx="28" ry="40" fill="#4aab5a" opacity=".8"/>
+            <ellipse cx="175" cy="115" rx="24" ry="36" fill="#4aab5a" opacity=".8"/>
+          </g>
+          <!-- Sound waves (right of bird) -->
+          <path d="M128 78 Q138 86 138 100 Q138 114 128 122" stroke="#2E7FD4" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+          <path d="M134 72 Q148 84 148 100 Q148 116 134 128" stroke="#2E7FD4" stroke-width="3" fill="none" stroke-linecap="round" opacity=".6"/>
+          <!-- Bird body -->
+          <ellipse cx="94" cy="105" rx="22" ry="18" fill="#1A5FA8"/>
+          <!-- Wing -->
+          <path d="M72 95 Q55 82 60 68 Q75 72 88 88Z" fill="#1A5FA8"/>
+          <path d="M72 95 Q57 88 62 76 Q74 80 86 92Z" fill="#2E7FD4"/>
+          <!-- Orange breast -->
+          <ellipse cx="97" cy="108" rx="12" ry="10" fill="#F5821F"/>
+          <!-- Head -->
+          <circle cx="107" cy="90" r="13" fill="#1A5FA8"/>
+          <!-- Eye -->
+          <circle cx="111" cy="88" r="3.5" fill="white"/>
+          <circle cx="112" cy="88" r="2" fill="#111"/>
+          <!-- Beak -->
+          <path d="M119 90 L127 87 L122 93Z" fill="#F5821F"/>
+          <!-- Tail -->
+          <path d="M72 105 L55 95 L60 110 L55 120 L70 112Z" fill="#1860a8"/>
+          <!-- Mic stand -->
+          <rect x="93" y="118" width="5" height="15" rx="2" fill="#555"/>
+          <rect x="87" y="131" width="17" height="3" rx="1.5" fill="#555"/>
+          <!-- Mic head -->
+          <ellipse cx="95" cy="115" rx="7" ry="9" fill="#333"/>
+          <ellipse cx="95" cy="115" rx="5" ry="7" fill="#555"/>
+          <!-- Mic waves -->
+          <path d="M84 112 Q80 115 84 118" stroke="#2E7FD4" stroke-width="2" fill="none" stroke-linecap="round"/>
+          <path d="M106 112 Q110 115 106 118" stroke="#2E7FD4" stroke-width="2" fill="none" stroke-linecap="round"/>
+          <!-- Pokéball -->
+          <circle cx="148" cy="122" r="10" fill="white" stroke="#ccc" stroke-width="1"/>
+          <path d="M138 122 Q138 112 148 112 Q158 112 158 122Z" fill="#e53935"/>
+          <circle cx="148" cy="122" r="3.5" fill="white" stroke="#999" stroke-width="1.5"/>
+          <!-- Stars & checkmarks -->
+          <text x="62" y="76" font-size="11" fill="#F5821F">★</text>
+          <text x="140" y="72" font-size="10" fill="#e53935">★</text>
+          <text x="68" y="100" font-size="10" fill="#43a047">✓</text>
+          <text x="130" y="95" font-size="10" fill="#43a047">✓</text>
+          <text x="78" y="130" font-size="10" fill="#2E7FD4">✓</text>
+          <!-- BIRDDEX text -->
+          <text x="100" y="192" text-anchor="middle" font-family="Arial Black, sans-serif" font-weight="900" font-size="22" letter-spacing="1">
+            <tspan fill="#2E5FA3">BIRD</tspan><tspan fill="#F5821F">DEX</tspan>
+          </text>
+          <text x="100" y="210" text-anchor="middle" font-family="Arial, sans-serif" font-weight="600" font-size="11" fill="#444" letter-spacing=".5">Record &amp; Collect</text>
+        </svg>
       </div>
-      <p class="hero-tagline">Record &amp; Collect</p>
+      <div class="hero-sparkle">✦</div>
+    </div>
 
-      <!-- Waveform — 24 bars -->
+    <!-- Record section -->
+    <div class="record-section">
+      <!-- 40-bar waveform -->
       <div id="waveform">
-        <div class="wave-bar"></div><div class="wave-bar"></div>
-        <div class="wave-bar"></div><div class="wave-bar"></div>
-        <div class="wave-bar"></div><div class="wave-bar"></div>
-        <div class="wave-bar"></div><div class="wave-bar"></div>
-        <div class="wave-bar"></div><div class="wave-bar"></div>
-        <div class="wave-bar"></div><div class="wave-bar"></div>
-        <div class="wave-bar"></div><div class="wave-bar"></div>
-        <div class="wave-bar"></div><div class="wave-bar"></div>
-        <div class="wave-bar"></div><div class="wave-bar"></div>
-        <div class="wave-bar"></div><div class="wave-bar"></div>
-        <div class="wave-bar"></div><div class="wave-bar"></div>
-        <div class="wave-bar"></div><div class="wave-bar"></div>
+        <div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div>
+        <div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div>
+        <div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div>
+        <div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div>
+        <div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div>
+        <div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div>
+        <div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div>
+        <div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div>
+        <div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div>
+        <div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div>
+        <div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div>
+        <div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div>
+        <div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div>
+        <div class="wave-bar"></div>
       </div>
 
-      <!-- Record button -->
       <div class="record-wrap">
         <div class="pulse-ring" id="ring1"></div>
         <div class="pulse-ring" id="ring2"></div>
@@ -663,11 +430,10 @@
       </div>
 
       <div id="record-timer"></div>
-      <p id="record-hint">Tik om op te nemen<br>Max. 20 seconden</p>
+      <p id="record-hint">Tik om op te nemen Max. 20 seconden</p>
       <p id="birdnet-badge">🔍 Verbinden…</p>
     </div>
 
-    <!-- Loading overlay -->
     <div id="loading-overlay">
       <div class="spinner"></div>
       <div id="loading-text">Luisteren…</div>
@@ -675,42 +441,27 @@
     </div>
   </div>
 
-  <!-- ── SCREEN: RESULT ─────────────────────────────────────── -->
+  <!-- ── SCREEN: RESULT ── -->
   <div id="screen-result" class="screen">
     <div id="result-content">
       <div id="result-image-wrap">
-        <img id="result-image" src="" alt="Vogelfoto" style="display:none" />
+        <img id="result-image" src="" alt="" style="display:none"/>
         <div id="result-image-placeholder">
-          <svg class="bird-svg-placeholder" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <ellipse cx="32" cy="40" rx="18" ry="12" fill="#2d6a4f"/>
-            <circle cx="44" cy="24" r="10" fill="#2d6a4f"/>
-            <path d="M54 24 L62 20 L56 28Z" fill="#f4a261"/>
-            <circle cx="47" cy="21" r="2" fill="white"/>
-            <circle cx="48" cy="21" r="1" fill="#1a1a2e"/>
-          </svg>
+          <svg width="64" height="64" viewBox="0 0 64 64" fill="none"><ellipse cx="32" cy="40" rx="18" ry="12" fill="#2d6a4f"/><circle cx="44" cy="24" r="10" fill="#2d6a4f"/><path d="M54 24 L62 20 L56 28Z" fill="#f4a261"/></svg>
         </div>
       </div>
-
       <div id="result-info">
         <div class="result-already" id="result-already">✓ Al gevangen!</div>
         <div id="result-name-nl">—</div>
         <div id="result-name-sci"></div>
         <div id="result-name-en"></div>
-        <div class="badges-row">
-          <span class="rarity-badge" id="result-rarity-badge"></span>
-        </div>
+        <div class="badges-row"><span class="rarity-badge" id="result-rarity-badge"></span></div>
         <div class="confidence-wrap">
-          <div class="confidence-label">
-            <span>Zekerheid</span>
-            <span id="conf-pct"></span>
-          </div>
-          <div class="confidence-bar-bg">
-            <div class="confidence-bar-fill" id="conf-fill" style="width:0%"></div>
-          </div>
+          <div class="confidence-label"><span>Zekerheid</span><span id="conf-pct"></span></div>
+          <div class="confidence-bar-bg"><div class="confidence-bar-fill" id="conf-fill" style="width:0%"></div></div>
         </div>
         <div class="fun-fact" id="result-fun-fact"></div>
       </div>
-
       <div class="result-actions">
         <button class="btn-catch" id="btn-catch">🎯 Vangen!</button>
         <button class="btn-again" id="btn-again">🔄 Opnieuw</button>
@@ -718,21 +469,18 @@
     </div>
   </div>
 
-  <!-- ── SCREEN: COLLECTION ─────────────────────────────────── -->
+  <!-- ── SCREEN: COLLECTION ── -->
   <div id="screen-collection" class="screen">
-    <div class="col-header">
-      <div class="col-header-left">
-        <h1>📖 BirdDex</h1>
-        <p id="collection-count"><span id="count-num">0</span> gevangen</p>
-      </div>
-      <div class="search-wrap">
+    <div class="col-top">
+      <div class="col-title-row">
+        <h1>Your collection</h1>
         <button id="search-toggle" aria-label="Zoeken">🔍</button>
       </div>
+      <div class="col-count"><span id="count-num">0</span>/<span id="count-total">60</span></div>
     </div>
 
-    <!-- Search bar (hidden by default) -->
     <div id="search-bar">
-      <input id="search-input" type="search" placeholder="Zoek een vogel…" autocomplete="off" />
+      <input id="search-input" type="search" placeholder="Zoek een vogel…" autocomplete="off"/>
     </div>
 
     <div id="empty-state">
@@ -745,55 +493,54 @@
     <div id="bird-grid"></div>
   </div>
 
-  <!-- ── SCREEN: STATS ──────────────────────────────────────── -->
+  <!-- ── SCREEN: STATS ── -->
   <div id="screen-stats" class="screen">
-    <div class="stats-header">
-      <h1>🏆 Statistieken</h1>
+    <div class="stats-top">
+      <h1>Statistieken</h1>
       <p>Jouw vogelreis in België</p>
     </div>
-
-    <!-- Hero stats -->
-    <div class="stats-hero">
-      <div class="stat-card accent-blue">
-        <div class="stat-value blue" id="stat-total">0</div>
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-value" id="stat-total">0</div>
         <div class="stat-label">Gevangen</div>
       </div>
-      <div class="stat-card accent-orange">
-        <div class="stat-value orange" id="stat-unique">0</div>
+      <div class="stat-card">
+        <div class="stat-value" id="stat-unique">0</div>
         <div class="stat-label">Unieke soorten</div>
       </div>
-      <div class="stat-card wide accent-gold" id="stat-rarest-card">
-        <div class="stat-rarest-icon">🌟</div>
-        <div class="stat-rarest-info">
-          <div class="stat-rarest-label">Zeldzaamste vangst</div>
+      <div class="stat-card wide">
+        <div class="stat-icon">🌟</div>
+        <div>
+          <div class="stat-label">Zeldzaamste vangst</div>
           <div class="stat-bird-name" id="stat-rarest">—</div>
         </div>
       </div>
     </div>
 
-    <!-- Completion progress -->
+    <!-- Completion -->
     <div class="stats-section">
       <h3>Completie</h3>
-      <div class="progress-wrap">
-        <div class="progress-ring-wrap">
-          <svg width="80" height="80" viewBox="0 0 80 80">
-            <circle class="progress-ring-bg" cx="40" cy="40" r="33"/>
-            <circle class="progress-ring-fill" id="progress-ring" cx="40" cy="40" r="33"
-              stroke-dasharray="207.3" stroke-dashoffset="207.3"/>
+      <div class="prog-wrap">
+        <div class="prog-ring-wrap">
+          <svg width="72" height="72" viewBox="0 0 72 72">
+            <circle class="prog-ring-bg" cx="36" cy="36" r="29"/>
+            <circle class="prog-ring-fill" id="progress-ring" cx="36" cy="36" r="29" stroke-dasharray="182.2" stroke-dashoffset="182.2"/>
           </svg>
-          <div class="progress-label">
-            <div class="progress-pct" id="progress-pct">0%</div>
-            <div class="progress-sub">Dex</div>
+          <div class="prog-label">
+            <div class="prog-pct" id="progress-pct">0%</div>
+            <div class="prog-sub">Dex</div>
           </div>
         </div>
-        <div class="progress-text">
-          <p>Je hebt <strong id="prog-caught">0</strong> van de <strong>60</strong> Belgische vogelsoorten gevangen.</p>
-          <p style="margin-top:6px">Ga naar buiten en vang ze allemaal! 🌳</p>
+        <div>
+          <div style="font-size:13px;color:var(--text2);line-height:1.6">
+            <strong id="prog-caught" style="color:var(--text)">0</strong> van de <strong style="color:var(--text)">60</strong> Belgische soorten gevangen.
+          </div>
+          <div style="font-size:12px;color:var(--text2);margin-top:4px">Ga naar buiten en vang ze allemaal! 🌳</div>
         </div>
       </div>
     </div>
 
-    <!-- Rarity distribution -->
+    <!-- Rarity bars -->
     <div class="stats-section">
       <h3>Verdeling zeldzaamheid</h3>
       <div class="bar-row">
@@ -818,35 +565,32 @@
       </div>
     </div>
 
-    <!-- Recent catches -->
+    <!-- Recent -->
     <div class="stats-section" style="margin-bottom:8px">
       <h3>Recente vangsten</h3>
       <div id="recent-list"></div>
-      <div id="recent-empty" style="font-size:13px;color:var(--text3);padding:4px 0;display:none">
-        Nog niets gevangen — ga naar buiten! 🌳
-      </div>
+      <div id="recent-empty" style="font-size:13px;color:var(--text2);padding:4px 0;display:none">Nog niets gevangen — ga naar buiten! 🌳</div>
     </div>
   </div>
 
-  <!-- ── Floating pill bottom nav ─────────────────────────── -->
+  <!-- Floating pill nav -->
   <div id="nav-outer">
     <nav id="bottom-nav">
-      <button class="nav-btn active" data-screen="record">
-        <span class="nav-icon">🎙️</span>
-        <span>Vangen</span>
-      </button>
+      <!-- Search icon -->
       <button class="nav-btn" data-screen="collection">
-        <span class="nav-icon">📖</span>
-        <span>BirdDex</span>
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M10.5 3a7.5 7.5 0 1 0 4.55 13.47l4.24 4.24a1 1 0 0 0 1.42-1.42l-4.24-4.24A7.5 7.5 0 0 0 10.5 3Zm0 2a5.5 5.5 0 1 1 0 11 5.5 5.5 0 0 1 0-11Z"/></svg>
       </button>
+      <!-- Bird / record -->
+      <button class="nav-btn active" data-screen="record">
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M21 7c0-2.76-3.13-5-7-5-1.9 0-3.62.56-4.9 1.47C8.44 3.18 7.76 3 7 3 4.24 3 2 5.24 2 8c0 2.42 1.72 4.44 4 4.9V14a8 8 0 0 0 8 8h1v-2h-1a6 6 0 0 1-6-6v-1.1A5.01 5.01 0 0 1 2 8c0-2.76 2.24-5 5-5 .34 0 .68.03 1 .09A7.48 7.48 0 0 1 14 2c3.31 0 6 1.79 6 4 0 1.57-1.28 2.96-3.23 3.72-.03.09-.06.18-.1.28H14a2 2 0 0 0-2 2v1h-2v2h2v1a4 4 0 0 0 4 4h1v-2h-1a2 2 0 0 1-2-2v-1h3.5c2.49 0 4.5-1.57 4.5-3.5V7Z"/></svg>
+      </button>
+      <!-- Bar chart / stats -->
       <button class="nav-btn" data-screen="stats">
-        <span class="nav-icon">🏆</span>
-        <span>Stats</span>
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M4 13h4v7H4v-7Zm6-6h4v13h-4V7Zm6 3h4v10h-4V10Z"/></svg>
       </button>
     </nav>
   </div>
-
-</div><!-- /app -->
+</div>
 
 <!-- Bird picker -->
 <div id="picker-overlay">
@@ -859,7 +603,6 @@
   </div>
 </div>
 
-<!-- Catch animation -->
 <div id="catch-anim">
   <div class="catch-card">
     <div class="catch-emoji">🎉</div>
@@ -867,31 +610,94 @@
     <div class="catch-sub">Toegevoegd aan je BirdDex!</div>
   </div>
 </div>
-
-<!-- Toast -->
 <div id="toast"></div>
 
 <script>
-/* ══════════════════════════════════════════════════════════════
-   STATE & STORAGE
-══════════════════════════════════════════════════════════════ */
-const LS_KEY_BIRDS = 'vogeldex_collection';
+/* ══════════════════════════════════════════════════════════
+   BIRDS DEX — 60 Belgian species
+══════════════════════════════════════════════════════════ */
+const BIRDS_DEX = [
+  // Common
+  { nl:'Merel', en:'Common Blackbird', sci:'Turdus merula', rarity:'common' },
+  { nl:'Houtduif', en:'Common Wood Pigeon', sci:'Columba palumbus', rarity:'common' },
+  { nl:'Koolmees', en:'Great Tit', sci:'Parus major', rarity:'common' },
+  { nl:'Spreeuw', en:'Common Starling', sci:'Sturnus vulgaris', rarity:'common' },
+  { nl:'Huismus', en:'House Sparrow', sci:'Passer domesticus', rarity:'common' },
+  { nl:'Roodborst', en:'European Robin', sci:'Erithacus rubecula', rarity:'common' },
+  { nl:'Vink', en:'Common Chaffinch', sci:'Fringilla coelebs', rarity:'common' },
+  { nl:'Kauw', en:'Western Jackdaw', sci:'Corvus monedula', rarity:'common' },
+  { nl:'Ekster', en:'Eurasian Magpie', sci:'Pica pica', rarity:'common' },
+  { nl:'Kraai', en:'Carrion Crow', sci:'Corvus corone', rarity:'common' },
+  { nl:'Turkse Tortel', en:'Eurasian Collared Dove', sci:'Streptopelia decaocto', rarity:'common' },
+  { nl:'Stadsduif', en:'Feral Pigeon', sci:'Columba livia domestica', rarity:'common' },
+  { nl:'Pimpelmees', en:'Eurasian Blue Tit', sci:'Cyanistes caeruleus', rarity:'common' },
+  { nl:'Winterkoning', en:'Eurasian Wren', sci:'Troglodytes troglodytes', rarity:'common' },
+  { nl:'Heggenmus', en:'Dunnock', sci:'Prunella modularis', rarity:'common' },
+  { nl:'Groenling', en:'European Greenfinch', sci:'Chloris chloris', rarity:'common' },
+  { nl:'Kievit', en:'Northern Lapwing', sci:'Vanellus vanellus', rarity:'common' },
+  { nl:'Wilde Eend', en:'Mallard', sci:'Anas platyrhynchos', rarity:'common' },
+  { nl:'Meerkoet', en:'Eurasian Coot', sci:'Fulica atra', rarity:'common' },
+  { nl:'Waterhoen', en:'Common Moorhen', sci:'Gallinula chloropus', rarity:'common' },
+  // Uncommon
+  { nl:'Tjiftjaf', en:'Common Chiffchaff', sci:'Phylloscopus collybita', rarity:'uncommon' },
+  { nl:'Fitis', en:'Willow Warbler', sci:'Phylloscopus trochilus', rarity:'uncommon' },
+  { nl:'Zwartkop', en:'Eurasian Blackcap', sci:'Sylvia atricapilla', rarity:'uncommon' },
+  { nl:'Putter', en:'European Goldfinch', sci:'Carduelis carduelis', rarity:'uncommon' },
+  { nl:'Zanglijster', en:'Song Thrush', sci:'Turdus philomelos', rarity:'uncommon' },
+  { nl:'Grote Bonte Specht', en:'Great Spotted Woodpecker', sci:'Dendrocopos major', rarity:'uncommon' },
+  { nl:'Boomklever', en:'Eurasian Nuthatch', sci:'Sitta europaea', rarity:'uncommon' },
+  { nl:'Boomkruiper', en:'Short-toed Treecreeper', sci:'Certhia brachydactyla', rarity:'uncommon' },
+  { nl:'Staartmees', en:'Long-tailed Tit', sci:'Aegithalos caudatus', rarity:'uncommon' },
+  { nl:'Glanskop', en:'Marsh Tit', sci:'Poecile palustris', rarity:'uncommon' },
+  { nl:'Gierzwaluw', en:'Common Swift', sci:'Apus apus', rarity:'uncommon' },
+  { nl:'Boerenzwaluw', en:'Barn Swallow', sci:'Hirundo rustica', rarity:'uncommon' },
+  { nl:'Huiszwaluw', en:'Common House Martin', sci:'Delichon urbicum', rarity:'uncommon' },
+  { nl:'Buizerd', en:'Common Buzzard', sci:'Buteo buteo', rarity:'uncommon' },
+  { nl:'Tuinfluiter', en:'Garden Warbler', sci:'Sylvia borin', rarity:'uncommon' },
+  { nl:'Spotvogel', en:'Icterine Warbler', sci:'Hippolais icterina', rarity:'uncommon' },
+  { nl:'Goudvink', en:'Eurasian Bullfinch', sci:'Pyrrhula pyrrhula', rarity:'uncommon' },
+  { nl:'Sijs', en:'Eurasian Siskin', sci:'Spinus spinus', rarity:'uncommon' },
+  { nl:'Keep', en:'Brambling', sci:'Fringilla montifringilla', rarity:'uncommon' },
+  { nl:'Rietgors', en:'Common Reed Bunting', sci:'Emberiza schoeniclus', rarity:'uncommon' },
+  // Rare
+  { nl:'Koekoek', en:'Common Cuckoo', sci:'Cuculus canorus', rarity:'rare' },
+  { nl:'Tortelduif', en:'European Turtle Dove', sci:'Streptopelia turtur', rarity:'rare' },
+  { nl:'Braamsluiper', en:'Common Whitethroat', sci:'Sylvia communis', rarity:'rare' },
+  { nl:'Nachtegaal', en:'Common Nightingale', sci:'Luscinia megarhynchos', rarity:'rare' },
+  { nl:'Gele Kwikstaart', en:'Western Yellow Wagtail', sci:'Motacilla flava', rarity:'rare' },
+  { nl:'Witte Kwikstaart', en:'White Wagtail', sci:'Motacilla alba', rarity:'rare' },
+  { nl:'Gekraagde Roodstaart', en:'Common Redstart', sci:'Phoenicurus phoenicurus', rarity:'rare' },
+  { nl:'Bonte Vliegenvanger', en:'European Pied Flycatcher', sci:'Ficedula hypoleuca', rarity:'rare' },
+  { nl:'Grauwe Vliegenvanger', en:'Spotted Flycatcher', sci:'Muscicapa striata', rarity:'rare' },
+  { nl:'Kleine Bonte Specht', en:'Lesser Spotted Woodpecker', sci:'Dryobates minor', rarity:'rare' },
+  { nl:'Draaihals', en:'Eurasian Wryneck', sci:'Jynx torquilla', rarity:'rare' },
+  { nl:'Ransuil', en:'Long-eared Owl', sci:'Asio otus', rarity:'rare' },
+  // Legendary
+  { nl:'Groene Specht', en:'European Green Woodpecker', sci:'Picus viridis', rarity:'legendary' },
+  { nl:'IJsvogel', en:'Common Kingfisher', sci:'Alcedo atthis', rarity:'legendary' },
+  { nl:'Hop', en:'Eurasian Hoopoe', sci:'Upupa epops', rarity:'legendary' },
+  { nl:'Blauwborst', en:'Bluethroat', sci:'Luscinia svecica', rarity:'legendary' },
+  { nl:'Zwarte Specht', en:'Black Woodpecker', sci:'Dryocopus martius', rarity:'legendary' },
+  { nl:'Wielewaal', en:'Eurasian Golden Oriole', sci:'Oriolus oriolus', rarity:'legendary' },
+  { nl:'Boomvalk', en:'Eurasian Hobby', sci:'Falco subbuteo', rarity:'legendary' },
+  { nl:'Kraanvogel', en:'Common Crane', sci:'Grus grus', rarity:'legendary' },
+];
 
-let collection = JSON.parse(localStorage.getItem(LS_KEY_BIRDS) || '[]');
+/* ══════════════════════════════════════════════════════════
+   STATE
+══════════════════════════════════════════════════════════ */
+const LS_KEY = 'vogeldex_collection';
+let collection = JSON.parse(localStorage.getItem(LS_KEY) || '[]');
 let lastResult = null;
 let searchQuery = '';
 
-function saveCollection() {
-  localStorage.setItem(LS_KEY_BIRDS, JSON.stringify(collection));
-}
+function saveCollection() { localStorage.setItem(LS_KEY, JSON.stringify(collection)); }
 
-/* ══════════════════════════════════════════════════════════════
+/* ══════════════════════════════════════════════════════════
    NAVIGATION
-══════════════════════════════════════════════════════════════ */
+══════════════════════════════════════════════════════════ */
 const navBtns = document.querySelectorAll('.nav-btn');
-navBtns.forEach(btn => {
-  btn.addEventListener('click', () => showScreen(btn.dataset.screen));
-});
+navBtns.forEach(btn => btn.addEventListener('click', () => showScreen(btn.dataset.screen)));
 
 function showScreen(name) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
@@ -901,53 +707,39 @@ function showScreen(name) {
   if (name === 'stats')      renderStats();
 }
 
-/* ══════════════════════════════════════════════════════════════
+/* ══════════════════════════════════════════════════════════
    SEARCH
-══════════════════════════════════════════════════════════════ */
+══════════════════════════════════════════════════════════ */
 const searchToggle = document.getElementById('search-toggle');
 const searchBar    = document.getElementById('search-bar');
 const searchInput  = document.getElementById('search-input');
 
 searchToggle.addEventListener('click', () => {
   const open = searchBar.classList.toggle('open');
-  searchToggle.classList.toggle('active', open);
-  if (open) { setTimeout(() => searchInput.focus(), 250); }
+  if (open) setTimeout(() => searchInput.focus(), 260);
   else { searchQuery = ''; searchInput.value = ''; renderCollection(); }
 });
+searchInput.addEventListener('input', () => { searchQuery = searchInput.value.trim().toLowerCase(); renderCollection(); });
 
-searchInput.addEventListener('input', () => {
-  searchQuery = searchInput.value.trim().toLowerCase();
-  renderCollection();
-});
-
-/* ══════════════════════════════════════════════════════════════
+/* ══════════════════════════════════════════════════════════
    LOCATION + SERVER HEALTH
-══════════════════════════════════════════════════════════════ */
+══════════════════════════════════════════════════════════ */
 let cachedLat = 50.85, cachedLon = 4.35;
 let birdnetOnline = false;
 
-// Update top bar location label
-function updateTopLocation(label) {
-  const el = document.getElementById('top-location');
-  if (el) el.textContent = label;
-}
-
 navigator.geolocation?.getCurrentPosition(
   async pos => {
-    cachedLat = pos.coords.latitude;
-    cachedLon = pos.coords.longitude;
-    console.log(`[GPS] ${cachedLat.toFixed(4)}, ${cachedLon.toFixed(4)}`);
-    // Reverse-geocode for top bar
+    cachedLat = pos.coords.latitude; cachedLon = pos.coords.longitude;
     try {
       const r = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${cachedLat}&lon=${cachedLon}&format=json`).catch(()=>null);
       if (r && r.ok) {
         const d = await r.json();
-        const label = d.address?.city || d.address?.town || d.address?.village || d.address?.county || 'Onbekend';
-        updateTopLocation(label);
+        const label = d.address?.city || d.address?.town || d.address?.village || 'België';
+        document.getElementById('top-location').textContent = label;
       }
     } catch {}
   },
-  () => { console.warn('[GPS] unavailable'); updateTopLocation('België'); },
+  () => { document.getElementById('top-location').textContent = 'België'; },
   { timeout: 8000, maximumAge: 300000 }
 );
 
@@ -963,848 +755,428 @@ async function checkBirdNET() {
   const badge = document.getElementById('birdnet-badge');
   if (badge) {
     badge.textContent = birdnetOnline ? '🧠 BirdNET actief' : '🎵 Akoestisch';
-    badge.style.color = birdnetOnline ? 'var(--blue-lt)' : 'var(--text3)';
+    badge.style.color = birdnetOnline ? '#43a047' : '#6B7A99';
   }
 }
 checkBirdNET();
 setInterval(checkBirdNET, 15000);
 
-/* ══════════════════════════════════════════════════════════════
+/* ══════════════════════════════════════════════════════════
    AUDIO RECORDING
-══════════════════════════════════════════════════════════════ */
-let mediaRecorder  = null;
-let recordTimer    = null;
-let secondsLeft    = 20;
-let isRecording    = false;
-let audioCtx       = null;
-let analyser       = null;
-let animFrame      = null;
-let acousticLog    = [];
+══════════════════════════════════════════════════════════ */
+let mediaRecorder=null, recordTimer=null, isRecording=false;
+let audioCtx=null, analyser=null, animFrame=null, acousticLog=[];
 
-const recordBtn   = document.getElementById('record-btn');
-const timerEl     = document.getElementById('record-timer');
-const hintEl      = document.getElementById('record-hint');
-const waveBars    = document.querySelectorAll('.wave-bar');
-const ring1       = document.getElementById('ring1');
-const ring2       = document.getElementById('ring2');
-const ring3       = document.getElementById('ring3');
+const recordBtn = document.getElementById('record-btn');
+const timerEl   = document.getElementById('record-timer');
+const hintEl    = document.getElementById('record-hint');
+const waveBars  = document.querySelectorAll('.wave-bar');
+const ring1=document.getElementById('ring1'), ring2=document.getElementById('ring2'), ring3=document.getElementById('ring3');
 const loadingOverlay = document.getElementById('loading-overlay');
 
-recordBtn.addEventListener('click', handleRecordClick);
-
-async function handleRecordClick() {
-  if (isRecording) { stopRecording(); return; }
-  await startRecording();
-}
+recordBtn.addEventListener('click', () => { if (isRecording) stopRecording(); else startRecording(); });
 
 async function startRecording() {
   let stream;
-  try {
-    stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
-  } catch (err) {
-    showToast('Microfoon toegang geweigerd. Controleer je instellingen.');
-    return;
-  }
+  try { stream = await navigator.mediaDevices.getUserMedia({ audio:true, video:false }); }
+  catch { showToast('Microfoon toegang geweigerd.'); return; }
 
   acousticLog = [];
-
   audioCtx = new (window.AudioContext || window.webkitAudioContext)();
   analyser = audioCtx.createAnalyser();
-  analyser.fftSize = 2048;
-  analyser.smoothingTimeConstant = 0.3;
+  analyser.fftSize = 2048; analyser.smoothingTimeConstant = 0.3;
 
-  const highpass = audioCtx.createBiquadFilter();
-  highpass.type = 'highpass';
-  highpass.frequency.value = 300;
-  highpass.Q.value = 0.7;
+  const hp = audioCtx.createBiquadFilter(); hp.type='highpass'; hp.frequency.value=300; hp.Q.value=0.7;
+  const gn = audioCtx.createGain(); gn.gain.value = 5;
+  audioCtx.createMediaStreamSource(stream).connect(hp); hp.connect(gn); gn.connect(analyser);
 
-  const gainNode = audioCtx.createGain();
-  gainNode.gain.value = 5;
+  const fd = new Uint8Array(analyser.frequencyBinCount);
+  const sr = audioCtx.sampleRate, bHz = sr / analyser.fftSize;
+  const B = [300,1500,3000,5000,8000,12000].map(hz => Math.min(Math.floor(hz/bHz), fd.length-1));
 
-  const source = audioCtx.createMediaStreamSource(stream);
-  source.connect(highpass);
-  highpass.connect(gainNode);
-  gainNode.connect(analyser);
-
-  const freqData   = new Uint8Array(analyser.frequencyBinCount);
-  const sampleRate = audioCtx.sampleRate;
-  const binHz      = sampleRate / analyser.fftSize;
-  const B = [300, 1500, 3000, 5000, 8000, 12000].map(hz => Math.min(Math.floor(hz / binHz), freqData.length - 1));
-
-  let lastSampleTime = 0;
+  let lastT = 0;
   function tick(ts) {
     if (!isRecording) return;
     animFrame = requestAnimationFrame(tick);
-    try { analyser.getByteFrequencyData(freqData); } catch { return; }
+    try { analyser.getByteFrequencyData(fd); } catch { return; }
 
-    const barMin = B[0], barMax = B[4];
-    const step = Math.max(1, Math.floor((barMax - barMin) / waveBars.length));
-    waveBars.forEach((bar, i) => {
-      const val = freqData[barMin + i * step] / 255;
-      bar.style.height = Math.max(4, val * 36) + 'px';
-    });
+    const step = Math.max(1, Math.floor((B[4]-B[0]) / waveBars.length));
+    waveBars.forEach((bar,i) => { bar.style.height = Math.max(4, fd[B[0]+i*step]/255*42) + 'px'; });
 
-    if (ts - lastSampleTime < 100) return;
-    lastSampleTime = ts;
-
-    let peakBin = B[0], peakVal = 0;
-    for (let i = B[0]; i < B[5]; i++) {
-      if (freqData[i] > peakVal) { peakVal = freqData[i]; peakBin = i; }
-    }
-    const peakFreq = Math.round(peakBin * binHz);
-
-    const bandE = [];
-    for (let b = 0; b < 5; b++) {
-      let sum = 0, cnt = B[b+1] - B[b];
-      for (let i = B[b]; i < B[b+1]; i++) sum += freqData[i];
-      bandE.push(cnt > 0 ? Math.round(sum / cnt) : 0);
-    }
-
-    let total = 0;
-    for (let i = B[0]; i < B[5]; i++) total += freqData[i];
-    const avgEnergy = Math.round(total / (B[5] - B[0]));
-
-    const h2 = Math.min(Math.round(peakBin * 2), freqData.length - 1);
-    const h3 = Math.min(Math.round(peakBin * 3), freqData.length - 1);
-    const harmonicStrength = Math.round((freqData[h2] + freqData[h3]) / 2);
-
-    acousticLog.push({ t: Math.round(ts), peakFreq, energy: avgEnergy, bandE, harmonicStrength });
+    if (ts - lastT < 100) return; lastT = ts;
+    let peakBin=B[0], peakVal=0;
+    for (let i=B[0];i<B[5];i++) if(fd[i]>peakVal){peakVal=fd[i];peakBin=i;}
+    const bandE=[];
+    for (let b=0;b<5;b++){let s=0,c=B[b+1]-B[b];for(let i=B[b];i<B[b+1];i++)s+=fd[i];bandE.push(c>0?Math.round(s/c):0);}
+    let tot=0; for(let i=B[0];i<B[5];i++) tot+=fd[i];
+    const h2=Math.min(Math.round(peakBin*2),fd.length-1), h3=Math.min(Math.round(peakBin*3),fd.length-1);
+    acousticLog.push({t:Math.round(ts),peakFreq:Math.round(peakBin*bHz),energy:Math.round(tot/(B[5]-B[0])),bandE,harmonicStrength:Math.round((fd[h2]+fd[h3])/2)});
   }
   animFrame = requestAnimationFrame(tick);
 
-  const thisCtx = audioCtx;
-  const thisLog = acousticLog;
-
-  const mimeType = ['audio/webm;codecs=opus','audio/webm','audio/mp4','audio/ogg']
-    .find(m => MediaRecorder.isTypeSupported(m)) || '';
-  mediaRecorder = new MediaRecorder(stream, mimeType ? { mimeType } : undefined);
-  const audioChunks = [];
-  mediaRecorder.ondataavailable = e => { if (e.data.size > 0) audioChunks.push(e.data); };
+  const thisCtx=audioCtx, thisLog=acousticLog;
+  const mt = ['audio/webm;codecs=opus','audio/webm','audio/mp4','audio/ogg'].find(m=>MediaRecorder.isTypeSupported(m))||'';
+  mediaRecorder = new MediaRecorder(stream, mt?{mimeType:mt}:undefined);
+  const chunks=[];
+  mediaRecorder.ondataavailable = e => { if(e.data.size>0) chunks.push(e.data); };
   mediaRecorder.onstop = () => {
-    stream.getTracks().forEach(t => t.stop());
-    thisCtx.close().catch(() => {});
-    if (audioCtx === thisCtx) audioCtx = null;
-    const blob = audioChunks.length ? new Blob(audioChunks, { type: mimeType || 'audio/webm' }) : null;
-    processAudio(thisLog, blob);
+    stream.getTracks().forEach(t=>t.stop()); thisCtx.close().catch(()=>{});
+    if(audioCtx===thisCtx) audioCtx=null;
+    processAudio(thisLog, chunks.length?new Blob(chunks,{type:mt||'audio/webm'}):null);
   };
 
-  audioCtx.resume().catch(() => {});
+  audioCtx.resume().catch(()=>{});
   mediaRecorder.start();
+  isRecording=true;
+  const MAX=20, t0=performance.now();
 
-  isRecording = true;
-  const MAX_SECS = 20;
-  secondsLeft = MAX_SECS;
-  const recordStart = performance.now();
-
-  recordBtn.textContent = '⏹';
-  recordBtn.classList.add('recording');
-  timerEl.textContent = MAX_SECS + 's';
-  timerEl.classList.add('recording');
-  hintEl.textContent = 'Opnemen… tik om te stoppen';
-  [ring1,ring2,ring3].forEach(r => { r.classList.add('active','recording'); });
-  waveBars.forEach(b => b.classList.add('active'));
+  recordBtn.textContent='⏹'; recordBtn.classList.add('recording');
+  timerEl.textContent=MAX+'s'; timerEl.classList.add('recording');
+  hintEl.textContent='Opnemen… tik om te stoppen';
+  [ring1,ring2,ring3].forEach(r=>{r.classList.add('active','recording');});
+  waveBars.forEach(b=>b.classList.add('active'));
 
   clearInterval(recordTimer);
-  recordTimer = setInterval(() => {
-    const elapsed = (performance.now() - recordStart) / 1000;
-    const remaining = Math.max(0, Math.ceil(MAX_SECS - elapsed));
-    timerEl.textContent = remaining + 's';
-    if (elapsed >= MAX_SECS) stopRecording();
-  }, 250);
+  recordTimer = setInterval(()=>{
+    const el=(performance.now()-t0)/1000, rem=Math.max(0,Math.ceil(MAX-el));
+    timerEl.textContent=rem+'s';
+    if(el>=MAX) stopRecording();
+  },250);
 }
 
 function stopRecording() {
-  if (!isRecording) return;
-  clearInterval(recordTimer);
-  isRecording = false;
-  cancelAnimationFrame(animFrame);
-  if (mediaRecorder && mediaRecorder.state !== 'inactive') mediaRecorder.stop();
-  recordBtn.textContent = '🎙️';
-  recordBtn.classList.remove('recording');
-  timerEl.textContent = '';
-  timerEl.classList.remove('recording');
-  hintEl.innerHTML = 'Verwerken&hellip;';
-  [ring1,ring2,ring3].forEach(r => r.classList.remove('active','recording'));
-  waveBars.forEach(b => { b.classList.remove('active'); b.style.height = '5px'; });
+  if(!isRecording) return;
+  clearInterval(recordTimer); isRecording=false; cancelAnimationFrame(animFrame);
+  if(mediaRecorder&&mediaRecorder.state!=='inactive') mediaRecorder.stop();
+  recordBtn.textContent='🎙️'; recordBtn.classList.remove('recording');
+  timerEl.textContent=''; timerEl.classList.remove('recording');
+  hintEl.innerHTML='Verwerken&hellip;';
+  [ring1,ring2,ring3].forEach(r=>r.classList.remove('active','recording'));
+  waveBars.forEach(b=>{b.classList.remove('active');b.style.height='5px';});
 }
 
-const _avg = arr => arr.length ? arr.reduce((a,b)=>a+b,0)/arr.length : 0;
-const _std = arr => { const m=_avg(arr); return Math.sqrt(_avg(arr.map(v=>(v-m)**2))); };
+const _avg=a=>a.length?a.reduce((x,y)=>x+y,0)/a.length:0;
+const _std=a=>{const m=_avg(a);return Math.sqrt(_avg(a.map(v=>(v-m)**2)));};
 
 function detectWindowTrend(freqs) {
-  if (freqs.length < 4) return '→';
-  const half = Math.floor(freqs.length / 2);
-  const diff = _avg(freqs.slice(half)) - _avg(freqs.slice(0, half));
-  let reversals = 0;
-  for (let i = 2; i < freqs.length; i++) {
-    const d1 = freqs[i-1] - freqs[i-2], d2 = freqs[i] - freqs[i-1];
-    if (d1 * d2 < 0 && Math.abs(d1) > 150 && Math.abs(d2) > 150) reversals++;
-  }
-  if (reversals >= 2) return '↑↓ (oscillerend)';
-  if (diff >  350) return '↑ (stijgend)';
-  if (diff < -350) return '↓ (dalend)';
+  if(freqs.length<4) return '→';
+  const h=Math.floor(freqs.length/2), diff=_avg(freqs.slice(h))-_avg(freqs.slice(0,h));
+  let rev=0;
+  for(let i=2;i<freqs.length;i++){const d1=freqs[i-1]-freqs[i-2],d2=freqs[i]-freqs[i-1];if(d1*d2<0&&Math.abs(d1)>150&&Math.abs(d2)>150)rev++;}
+  if(rev>=2) return '↑↓ (oscillerend)';
+  if(diff>350) return '↑ (stijgend)';
+  if(diff<-350) return '↓ (dalend)';
   return '→ (vlak)';
 }
 
 function segmentCalls(log) {
-  if (log.length === 0) return { calls: [], intervals_ms: [] };
-  const energies = log.map(s => s.energy);
-  const noiseFloor = energies.slice().sort((a,b)=>a-b)[Math.floor(energies.length * 0.25)];
-  const threshold  = Math.max(noiseFloor * 2.2, 5);
-  const calls = [];
-  let start = null;
-  for (const s of log) {
-    if (s.energy > threshold) { if (start === null) start = s.t; }
-    else {
-      if (start !== null) {
-        calls.push({ start_ms: s.t - log[0].t, dur_ms: s.t - start,
-                     peak_hz: Math.max(...log.filter(x=>x.t>=start&&x.t<=s.t).map(x=>x.peakFreq)) });
-        start = null;
-      }
-    }
+  if(!log.length) return {calls:[],intervals_ms:[]};
+  const en=log.map(s=>s.energy), nf=en.slice().sort((a,b)=>a-b)[Math.floor(en.length*0.25)], thr=Math.max(nf*2.2,5);
+  const calls=[]; let st=null;
+  for(const s of log){
+    if(s.energy>thr){if(st===null)st=s.t;}
+    else if(st!==null){calls.push({start_ms:s.t-log[0].t,dur_ms:s.t-st,peak_hz:Math.max(...log.filter(x=>x.t>=st&&x.t<=s.t).map(x=>x.peakFreq))});st=null;}
   }
-  if (start !== null) {
-    const last = log[log.length-1];
-    calls.push({ start_ms: last.t - log[0].t, dur_ms: last.t - start, peak_hz: last.peakFreq });
-  }
-  const intervals_ms = calls.slice(1).map((c,i) => c.start_ms - (calls[i].start_ms + calls[i].dur_ms));
-  return { calls, intervals_ms };
+  if(st!==null){const l=log[log.length-1];calls.push({start_ms:l.t-log[0].t,dur_ms:l.t-st,peak_hz:l.peakFreq});}
+  return {calls,intervals_ms:calls.slice(1).map((c,i)=>c.start_ms-(calls[i].start_ms+calls[i].dur_ms))};
 }
 
 function buildAcousticProfile(log) {
-  const emptyProfile = 'Geen geluid gedetecteerd (microfoon mogelijk stil of geblokkeerd).';
-  if (log.length === 0) return emptyProfile;
-
-  const totalMs   = log[log.length-1].t - log[0].t;
-  const durationS = (totalMs / 1000).toFixed(1);
-  const freqs     = log.map(s => s.peakFreq);
-  const energies  = log.map(s => s.energy);
-
-  const WIN = 500;
-  const startT = log[0].t;
-  const windows = [];
-  for (let wt = startT; wt < log[log.length-1].t; wt += WIN) {
-    const frames = log.filter(s => s.t >= wt && s.t < wt + WIN);
-    const tLabel = ((wt - startT) / 1000).toFixed(1) + 's';
-    if (frames.length === 0 || _avg(frames.map(f=>f.energy)) < 3) {
-      windows.push(`  ${tLabel}: [stilte]`);
-    } else {
-      const wFreqs  = frames.map(f => f.peakFreq);
-      const trend   = detectWindowTrend(wFreqs);
-      windows.push(`  ${tLabel}: ${Math.round(_avg(wFreqs))} Hz, energie=${Math.round(_avg(frames.map(f=>f.energy)))}, trend=${trend}`);
-    }
+  if(!log.length) return 'Geen geluid gedetecteerd.';
+  const totalMs=log[log.length-1].t-log[0].t, freqs=log.map(s=>s.peakFreq), energies=log.map(s=>s.energy);
+  const WIN=500, startT=log[0].t, windows=[];
+  for(let wt=startT;wt<log[log.length-1].t;wt+=WIN){
+    const fr=log.filter(s=>s.t>=wt&&s.t<wt+WIN), tL=((wt-startT)/1000).toFixed(1)+'s';
+    if(!fr.length||_avg(fr.map(f=>f.energy))<3){windows.push(`  ${tL}: [stilte]`);}
+    else windows.push(`  ${tL}: ${Math.round(_avg(fr.map(f=>f.peakFreq)))} Hz, e=${Math.round(_avg(fr.map(f=>f.energy)))}, trend=${detectWindowTrend(fr.map(f=>f.peakFreq))}`);
   }
-
-  const { calls, intervals_ms } = segmentCalls(log);
-  const avgCallDur  = calls.length ? Math.round(_avg(calls.map(c=>c.dur_ms))) : 0;
-  const avgInterval = intervals_ms.length ? Math.round(_avg(intervals_ms)) : 0;
-  const callsPerSec = totalMs > 0 ? (calls.length / (totalMs/1000)).toFixed(2) : '0';
-
-  const callStyle = avgCallDur === 0 ? 'geen calls gedetecteerd'
-    : avgCallDur < 80   ? 'zeer korte tik-calls (<80ms)'
-    : avgCallDur < 200  ? 'korte noten (80–200ms)'
-    : avgCallDur < 600  ? 'middellange noten (200–600ms)'
-    : avgCallDur < 1500 ? 'lange fluit/roep (600ms–1.5s)'
-    : 'aanhoudende zang (>1.5s)';
-
-  let callRegularity = 'n.v.t.';
-  if (intervals_ms.length >= 2) {
-    const cv = _std(intervals_ms) / (_avg(intervals_ms) || 1);
-    callRegularity = cv < 0.15 ? 'zeer regelmatig' : cv < 0.35 ? 'redelijk regelmatig' : cv < 0.6 ? 'onregelmatig' : 'zeer onregelmatig';
-  }
-
-  const bandLabels = ['300–1500Hz','1500–3000Hz','3000–5000Hz','5000–8000Hz','8000–12000Hz'];
-  const bandAvg = [0,1,2,3,4].map(b => Math.round(_avg(log.map(s => s.bandE ? s.bandE[b] : 0))));
-  const dominantBand = bandAvg.indexOf(Math.max(...bandAvg));
-  const bandStr = bandLabels.map((l,i) => `    ${l}: ${bandAvg[i]}/255${i===dominantBand?' ← DOMINANT':''}`).join('\n');
-
-  const avgHarmonic = Math.round(_avg(log.map(s => s.harmonicStrength || 0)));
-  const avgPeakVal  = Math.round(_avg(log.map(s => Math.max(...(s.bandE||[0])))));
-  const harmonicRatio = avgPeakVal > 0 ? (avgHarmonic / avgPeakVal).toFixed(2) : '0.00';
-  const harmonicDesc = harmonicRatio > 0.6  ? 'STERK harmonisch'
-    : harmonicRatio > 0.35 ? 'matig harmonisch'
-    : 'weinig harmonisch';
-
-  const freqStd    = Math.round(_std(freqs));
-  const freqMedian = freqs.slice().sort((a,b)=>a-b)[Math.floor(freqs.length/2)];
-  const overallMod = freqStd < 150 ? 'vlak/monotoon' : freqStd < 400 ? 'licht modulerend' : freqStd < 900 ? 'sterk modulerend' : 'zeer variabel';
-
-  return [
-    `Opnameduur: ${durationS}s | Samples: ${log.length}`,
-    ``,`── TIJDSERIE ──`, ...windows,
-    ``,`── CALL-SEGMENTATIE ──`,
-    `  Calls: ${calls.length}  |  Rate: ${callsPerSec}/sec`,
-    `  Duur: ${avgCallDur}ms (${callStyle})`,
-    `  Pauze: ${avgInterval}ms  |  Regelmaat: ${callRegularity}`,
-    calls.length > 0 ? `  Calls: ${calls.slice(0,8).map(c=>`[${(c.start_ms/1000).toFixed(1)}s,${c.dur_ms}ms,${c.peak_hz}Hz]`).join(' ')}` : '',
-    ``,`── SPECTRAAL PROFIEL ──`, bandStr,
-    ``,`── HARMONISCH ──`,
-    `  Ratio: ${harmonicRatio} → ${harmonicDesc}`,
-    ``,`── SAMENVATTING ──`,
-    `  Mediaan: ${freqMedian} Hz | Std: ${freqStd} Hz → ${overallMod}`,
-    `  Energie: ${Math.round(_avg(energies))}/255`,
+  const {calls,intervals_ms}=segmentCalls(log);
+  const acd=calls.length?Math.round(_avg(calls.map(c=>c.dur_ms))):0;
+  const bl=['300–1500Hz','1500–3000Hz','3000–5000Hz','5000–8000Hz','8000–12000Hz'];
+  const ba=[0,1,2,3,4].map(b=>Math.round(_avg(log.map(s=>s.bandE?s.bandE[b]:0))));
+  const db=ba.indexOf(Math.max(...ba));
+  const aH=Math.round(_avg(log.map(s=>s.harmonicStrength||0))), aPV=Math.round(_avg(log.map(s=>Math.max(...(s.bandE||[0])))));
+  const hr=aPV>0?(aH/aPV).toFixed(2):'0.00';
+  return[
+    `Duur: ${(totalMs/1000).toFixed(1)}s | Samples: ${log.length}`,
+    `\n── TIJDSERIE ──`,...windows,
+    `\n── CALLS ──`,
+    `  Aantal: ${calls.length} | Rate: ${totalMs>0?(calls.length/(totalMs/1000)).toFixed(2):0}/sec`,
+    `  Gem.duur: ${acd}ms | Pauze: ${intervals_ms.length?Math.round(_avg(intervals_ms)):0}ms`,
+    `\n── SPECTRAAL ──`,...bl.map((l,i)=>`  ${l}: ${ba[i]}${i===db?' ← DOM':''}`),
+    `\n── HARMONISCH ──`,`  Ratio: ${hr}`,
+    `\n── SAMENVATTING ──`,
+    `  Mediaan: ${freqs.slice().sort((a,b)=>a-b)[Math.floor(freqs.length/2)]} Hz`,
+    `  Std: ${Math.round(_std(freqs))} Hz | Energie: ${Math.round(_avg(energies))}/255`,
   ].join('\n');
 }
 
 async function queryBirdNET(blob) {
-  if (!blob || !birdnetOnline) return null;
+  if(!blob||!birdnetOnline) return null;
   try {
-    const ext = blob.type.includes('mp4') ? '.mp4' : blob.type.includes('ogg') ? '.ogg' : '.webm';
-    const form = new FormData();
-    form.append('audio', blob, 'recording' + ext);
-    const res = await fetch(
-      `${BIRDNET_SERVER}/identify?lat=${cachedLat.toFixed(5)}&lon=${cachedLon.toFixed(5)}`,
-      { method: 'POST', body: form, signal: AbortSignal.timeout(20000) }
-    );
-    if (!res.ok) return null;
-    const data = await res.json();
-    console.log('[BirdNET]', data.results);
-    return data;
-  } catch (e) {
-    console.warn('[BirdNET] request failed:', e.message);
-    return null;
-  }
+    const ext=blob.type.includes('mp4')?'.mp4':blob.type.includes('ogg')?'.ogg':'.webm';
+    const form=new FormData(); form.append('audio',blob,'recording'+ext);
+    const res=await fetch(`${BIRDNET_SERVER}/identify?lat=${cachedLat.toFixed(5)}&lon=${cachedLon.toFixed(5)}`,{method:'POST',body:form,signal:AbortSignal.timeout(20000)});
+    if(!res.ok) return null;
+    const data=await res.json(); console.log('[BirdNET]',data.results); return data;
+  } catch(e){console.warn('[BirdNET]',e.message);return null;}
 }
 
-async function processAudio(log, blob) {
+async function processAudio(log,blob) {
   showLoading(true);
   try {
-    const profile = buildAcousticProfile(log);
-    const birdnetData = await queryBirdNET(blob);
-    const birds = await identifyBirds(profile, birdnetData);
-
-    if (!birds || birds.length === 0)
-      throw new Error('Geen vogel herkend. Probeer dichter bij de vogel, bij minder wind.');
-    if (birds.length === 1) {
-      const imageUrl = await fetchWikipediaImage(birds[0].common_name_en);
-      lastResult = { ...birds[0], image_url: imageUrl };
-      showResult(lastResult);
-    } else {
-      await showBirdPicker(birds);
-    }
-  } catch (err) {
-    console.error(err);
-    showToast('Fout: ' + (err.message || 'Onbekende fout. Probeer opnieuw.'));
-    hintEl.textContent = 'Tik om op te nemen\nMax. 20 seconden';
-  } finally {
-    showLoading(false);
-  }
+    const profile=buildAcousticProfile(log), birdnetData=await queryBirdNET(blob);
+    const birds=await identifyBirds(profile,birdnetData);
+    if(!birds||!birds.length) throw new Error('Geen vogel herkend. Probeer dichter bij de vogel.');
+    if(birds.length===1){lastResult={...birds[0],image_url:await fetchWikipediaImage(birds[0].common_name_en)};showResult(lastResult);}
+    else await showBirdPicker(birds);
+  } catch(err){console.error(err);showToast('Fout: '+(err.message||'Probeer opnieuw.'));hintEl.textContent='Tik om op te nemen Max. 20 seconden';}
+  finally{showLoading(false);}
 }
 
 async function showBirdPicker(birds) {
-  const withImages = await Promise.all(birds.map(async b => ({
-    ...b, image_url: await fetchWikipediaImage(b.common_name_en)
-  })));
-
-  return new Promise(resolve => {
-    const overlay = document.getElementById('picker-overlay');
-    const list    = document.getElementById('picker-list');
-    list.innerHTML = '';
-
-    withImages.forEach(bird => {
-      const pct = Math.round(bird.confidence * 100);
-      const btn = document.createElement('button');
-      btn.className = 'picker-item';
-      btn.innerHTML = `
-        <div class="picker-thumb">
-          ${bird.image_url ? `<img src="${escHtml(bird.image_url)}" alt="">` : birdPlaceholder()}
-        </div>
-        <div class="picker-info">
-          <div class="picker-name">${escHtml(bird.common_name_nl)}</div>
-          <div class="picker-sci">${escHtml(bird.scientific_name)}</div>
-          <div style="display:flex;align-items:center;gap:8px;margin-top:4px">
-            <span class="rarity-badge rarity-${bird.rarity}" style="font-size:10px;padding:2px 8px">${rarityLabel(bird.rarity)}</span>
-            <span style="font-size:11px;color:var(--text2)">${pct}% zeker</span>
-          </div>
-        </div>
-        <span style="font-size:18px;color:var(--blue-lt);flex-shrink:0">›</span>`;
-
-      btn.addEventListener('click', () => {
-        overlay.classList.remove('show');
-        lastResult = bird;
-        showResult(bird);
-        resolve();
-      });
+  const wi=await Promise.all(birds.map(async b=>({...b,image_url:await fetchWikipediaImage(b.common_name_en)})));
+  return new Promise(resolve=>{
+    const ov=document.getElementById('picker-overlay'), list=document.getElementById('picker-list');
+    list.innerHTML='';
+    wi.forEach(bird=>{
+      const btn=document.createElement('button'); btn.className='picker-item';
+      btn.innerHTML=`<div class="picker-thumb">${bird.image_url?`<img src="${escHtml(bird.image_url)}" alt="">`:birdPlaceholder()}</div><div class="picker-info"><div class="picker-name">${escHtml(bird.common_name_nl)}</div><div class="picker-sci">${escHtml(bird.scientific_name)}</div><div style="margin-top:4px"><span class="rarity-badge rarity-${bird.rarity}">${rarityLabel(bird.rarity)}</span></div></div><span style="font-size:18px;color:var(--blue);flex-shrink:0">›</span>`;
+      btn.addEventListener('click',()=>{ov.classList.remove('show');lastResult=bird;showResult(bird);resolve();});
       list.appendChild(btn);
     });
-
-    overlay.classList.add('show');
-    document.getElementById('picker-cancel').onclick = () => {
-      overlay.classList.remove('show');
-      hintEl.textContent = 'Tik om op te nemen\nMax. 20 seconden';
-      resolve();
-    };
+    ov.classList.add('show');
+    document.getElementById('picker-cancel').onclick=()=>{ov.classList.remove('show');hintEl.textContent='Tik om op te nemen Max. 20 seconden';resolve();};
   });
 }
 
-/* ══════════════════════════════════════════════════════════════
+/* ══════════════════════════════════════════════════════════
    CLAUDE API
-══════════════════════════════════════════════════════════════ */
+══════════════════════════════════════════════════════════ */
 async function identifyBirds(profile, birdnetData) {
-  if (typeof profile === 'string' && profile.startsWith('Geen')) {
-    throw new Error('Geen geluid opgenomen. Controleer of je microfoon werkt.');
+  if(typeof profile==='string'&&profile.startsWith('Geen')) throw new Error('Geen geluid opgenomen.');
+
+  let bns='';
+  if(birdnetData?.results?.length){
+    const mn=['January','February','March','April','May','June','July','August','September','October','November','December'];
+    const lines=birdnetData.results.map(r=>`  ${(r.confidence*100).toFixed(1)}%  ${r.common_name||r.label} (${r.scientific_name||''})  — ${r.detections||1} windows`).join('\n');
+    bns=`\n\n════ BIRDNET SCORES ════\nLocation: ${cachedLat.toFixed(2)}°N ${cachedLon.toFixed(2)}°E | Season: ${mn[new Date().getMonth()]}\nTrust these as PRIMARY evidence (80% weight). If ≥0.5 confidence → almost certainly correct.\n\n${lines}`;
   }
 
-  let birdnetSection = '';
-  if (birdnetData?.results?.length) {
-    const today = new Date();
-    const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-    const month = monthNames[today.getMonth()];
-    const locStr = `${cachedLat.toFixed(2)}°N, ${cachedLon.toFixed(2)}°E`;
+  const sys=`You are an expert field ornithologist specialising in Belgium and the Netherlands. Identify birds from acoustic analysis.
 
-    const lines = birdnetData.results.map(r => {
-      const pct  = (r.confidence * 100).toFixed(1);
-      const wins = r.detections || 1;
-      const name = r.common_name || r.label?.split('_').slice(1).join(' ') || r.label;
-      const sci  = r.scientific_name || r.label?.split('_')[0] || '';
-      return `  ${pct}%  ${name} (${sci})  — detected in ${wins} of the 3-second analysis windows`;
-    }).join('\n');
+CRITICAL: Always return valid JSON array. Never refuse. Best guess at 0.30 > refusing.
 
-    birdnetSection = `\n\n════ BIRDNET NEURAL NETWORK SCORES ════\nLocation: ${locStr}  |  Season: ${month}  |  These scores are filtered by location + season using eBird occurrence data.\nThe model was trained on 6000+ species from the Cornell Lab. Trust these scores as your PRIMARY evidence (80% weight).\n\n${lines}\n\nUse the acoustic profile below only to break ties or add context. If BirdNET gives ≥0.5 to one species, that is almost certainly correct.`;
-  }
+FREQUENCY: 300-800Hz=doves/crows, 800-2kHz=sparrows/starling, 2-5kHz=tits/warblers/blackbird, 5-9kHz=wren/blue tit
+HARMONIC: >0.6=doves/cuckoo, 0.3-0.6=blackbird/robin, <0.3=wren/crow/sparrow chip
+CALL RATE: >6/sec=wren/swift, 1.5-3/sec=chiffchaff/great tit, 0.3-0.8/sec=doves/cuckoo, <0.2=buzzard
 
-  const systemPrompt = `You are an expert field ornithologist specialising in Belgium and the Netherlands, with 30 years of experience identifying birds by ear. You receive a structured acoustic analysis from a phone microphone recording. Your task: identify the most likely bird(s) with maximum accuracy.
+KEY SPECIES:
+• Houtduif (Wood Pigeon): 5-note harmonic coo, 600-800Hz, 0.3-0.5/sec, very regular
+• Merel (Blackbird): rich 2-5kHz, never repeats phrase, 0.5-1/sec
+• Tjiftjaf (Chiffchaff): EXACTLY 2/sec, ↑↓ oscillating, 4-5kHz, extremely regular
+• Winterkoning (Wren): >8/sec, broadband 3-9kHz, extremely loud
+• Koolmees (Great Tit): 3-4kHz, 1-2/sec, very regular tsee-tsee
+• Pimpelmees (Blue Tit): 5-9kHz (higher than Great Tit)
+• Roodborst (Robin): thin 3-7kHz, very variable, 1-3s phrases
+• Fitis (Willow Warbler): descending ↓ cascade 3-6kHz, 2s phrase
+• Spreeuw (Starling): complex mix whistles+clicks+rattles, 1-8kHz
+• Huismus (House Sparrow): 2-5kHz, short chips, irregular
+• Kraai (Crow): 0.5-1.5kHz, harsh, very low, slow
+• Kauw (Jackdaw): 1-2kHz, sharp "djak", urban
+• Koekoek (Cuckoo): 2 descending notes 650→550Hz, 0.5/sec, harmonic
 
-CRITICAL RULES:
-1. ALWAYS return a JSON result — never refuse or return an error unless the data is pure silence with zero energy across all windows.
-2. When uncertain, return 2–3 candidates ordered by confidence.
-3. Use the TIME SERIES and CALL RATE as primary evidence — they are more diagnostic than summary stats.
-4. A best guess at 0.30 confidence is better than refusing to answer.
+OUTPUT: JSON array only, no other text:
+[{"common_name_nl":"Merel","common_name_en":"Common Blackbird","scientific_name":"Turdus merula","confidence":0.87,"rarity":"common","fun_fact_nl":"...","reasoning":"..."}]
+Rarity: common=daily gardens, uncommon=regular patchy, rare=scarce/seasonal, legendary=very rare gardens`;
 
-════ ACOUSTIC FEATURE GUIDE ════
-
-FREQUENCY tells you the bird family:
-• 300–800 Hz dominant: doves/pigeons, crows, buzzard
-• 800–2000 Hz dominant: sparrows, starling, jackdaw, magpie
-• 2000–5000 Hz dominant: tits, warblers, blackbird, thrush, finches
-• 5000–9000 Hz dominant: wren trill, treecreeper, blue tit, swift
-
-HARMONIC RATIO tells you the sound quality:
-• >0.6 (strongly harmonic): doves/pigeons, cuckoo — pure tonal sounds
-• 0.3–0.6 (moderately harmonic): blackbird, robin, warbler songs
-• <0.3 (noisy/broadband): wren rattle, sparrow chip, crow, woodpecker drum
-
-CALL RATE tells you the species:
-• >6 calls/sec: Wren (trill), swift screaming
-• 1.5–3 calls/sec: Chiffchaff (exactly 2/sec), Great Tit "teacher-teacher"
-• 0.3–0.8 calls/sec: doves (all types), cuckoo, blackbird phrases
-• <0.2 calls/sec: buzzard, isolated calls, long songs
-
-CALL DURATION:
-• <100ms: tit chips, sparrow chips, wren trill components
-• 100–400ms: chiffchaff notes, tit songs, finch notes
-• 400ms–1.5s: blackbird/thrush phrases, robin phrases, warbler phrases
-• >1.5s: dove coos, cuckoo call, continuous warbler song
-
-TREND PATTERN:
-• ↑↓ oscillating flat: Chiffchaff (diagnostic)
-• ↓ descending per phrase: Willow Warbler, Chaffinch
-• → flat monotone: doves, crows
-• Variable, no pattern: Blackbird, Robin, Starling
-
-════ SPECIES REFERENCE ════
-DOVES & PIGEONS (harmonic ratio >0.6, 400–900 Hz dominant):
-• Houtduif / Wood Pigeon (Columba palumbus): 5-note pattern; 600–800 Hz; rate 0.3–0.5/sec; very harmonic. MOST COMMON dove in Belgium.
-• Stadsduif / Feral Pigeon (Columba livia): monotone cooing 400–700 Hz; less structured; urban.
-• Turkse Tortel / Collared Dove (Streptopelia decaocto): "koo-KOO-koo" 3 notes; 600–800 Hz; rate ~0.3/sec.
-• Tortelduif / Turtle Dove (Streptopelia turtur): purring "turrr-turrr"; 400–600 Hz. RARE summer only.
-• Koekoek / Cuckoo (Cuculus canorus): two descending notes ~650Hz→550Hz; rate 0.5/sec. RARE.
-
-GARDEN SONGBIRDS:
-• Merel / Blackbird (Turdus merula): rich fluted phrases 2–5 kHz; NEVER repeats same phrase; 0.5–1 phrase/sec.
-• Zanglijster / Song Thrush (Turdus philomelos): like Merel but REPEATS each phrase 2–4× before changing.
-• Roodborst / Robin (Erithacus rubecula): thin high warbling 3–7 kHz; very variable; phrases 1–3s.
-• Heggenmus / Dunnock (Prunella modularis): thin quiet warble 3–6 kHz; LOW energy.
-• Spreeuw / Starling (Sturnus vulgaris): complex mix of whistles + clicks + rattles + mimicry; 1–8 kHz.
-
-TITS:
-• Koolmees / Great Tit (Parus major): "tsee-tsee-tsee"; 3000–4000 Hz; very regular 1–2/sec.
-• Pimpelmees / Blue Tit (Cyanistes caeruleus): "tsee-tsee" + rapid trill; 5000–9000 Hz (HIGHER than Great Tit).
-• Staartmees / Long-tailed Tit (Aegithalos caudatus): thin "see-see-see" 7–9 kHz.
-
-WARBLERS:
-• Tjiftjaf / Chiffchaff (Phylloscopus collybita): alternating "tjif-tjaf"; rate EXACTLY ~2/sec; 4000–5000 Hz; VERY FLAT trend; extremely regular.
-• Fitis / Willow Warbler (Phylloscopus trochilus): DESCENDING cascade 3–6 kHz; each phrase ~2s sweeping downward.
-• Zwartkop / Blackcap (Sylvia atricapilla): rich warble accelerating to higher fluty notes 2–7 kHz.
-
-FINCHES:
-• Vink / Chaffinch (Fringilla coelebs): descending cascade 2–8 kHz ending in flourish; phrase 2–3s.
-• Groenling / Greenfinch (Chloris chloris): nasal "dweeet" 2–4 kHz + musical twittering.
-• Putter / Goldfinch (Carduelis carduelis): liquid twittering 3–7 kHz; rapid irregular bright notes.
-
-WRENS & OTHERS:
-• Winterkoning / Wren (Troglodytes troglodytes): EXTREMELY LOUD rapid trill 3–9 kHz; rate 8–12 notes/sec.
-• Gierzwaluw / Swift (Apus apus): screaming 3–8 kHz; erratic bursts; summer urban skies.
-
-CORVIDS & RAPTORS:
-• Kauw / Jackdaw (Corvus monedula): "djak" 1–2 kHz; short sharp calls; urban.
-• Ekster / Magpie (Pica pica): harsh rattling 1–4 kHz; irregular rapid bursts.
-• Kraai / Carrion Crow (Corvus corone): harsh "kraah" 0.5–1.5 kHz; slow; very low.
-• Buizerd / Buzzard (Buteo buteo): mewing "peeeuuu" 0.5–2 kHz; descending; slow.
-
-WOODPECKERS:
-• Grote Bonte Specht / Great Spotted Woodpecker (Dendrocopos major): sharp "kik" 2–4 kHz OR drumming burst.
-• Groene Specht / Green Woodpecker (Picus viridis): laughing "ja-ja-ja" 1–3 kHz; descending. LEGENDARY.
-
-WATER & MARSH:
-• Waterhoen / Moorhen (Gallinula chloropus): harsh "krrk" + whinnying 1–3 kHz.
-• Wilde Eend / Mallard (Anas platyrhynchos): "quack" 0.5–2 kHz.
-
-════ OUTPUT FORMAT ════
-Return ONLY a valid JSON array, no other text. 1–3 candidates, highest confidence first:
-[
-  {
-    "common_name_nl": "Houtduif",
-    "common_name_en": "Common Wood Pigeon",
-    "scientific_name": "Columba palumbus",
-    "confidence": 0.87,
-    "rarity": "common",
-    "fun_fact_nl": "De houtduif is de grootste duif van België en herkent zijn eigen roep niet als gevaar.",
-    "reasoning": "Dominant 600-800Hz, harmonic ratio 0.7, call duration >800ms, rate 0.4/sec matches Wood Pigeon coo pattern."
-  }
-]
-
-Confidence: 0.85–1.00=diagnostic match, 0.65–0.84=two features match, 0.45–0.64=general match, 0.25–0.44=best guess
-Rarity: common=daily in gardens, uncommon=regular but patchy, rare=scarce/seasonal, legendary=very rare in gardens`;
-
-  const profileText = `Here is the acoustic analysis. Use the time series and call segmentation first — they are the most diagnostic.${birdnetSection}
-
-════ ACOUSTIC PROFILE (supporting context) ════
-${profile}
-
-Based on this data, which bird(s) from Belgium/Netherlands best match? Return a JSON array.`;
-
-  const res = await fetch(`${BIRDNET_SERVER}/claude`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ system: systemPrompt, user: profileText })
-  });
-
-  if (!res.ok) {
-    const errData = await res.json().catch(() => ({}));
-    throw new Error(errData.detail || `API-fout ${res.status}`);
-  }
-
-  const data = await res.json();
-  const text = data.content?.[0]?.text || '';
-
-  const arrMatch = text.match(/\[[\s\S]*\]/);
-  const objMatch = text.match(/\{[\s\S]*\}/);
-
+  const res=await fetch(`${BIRDNET_SERVER}/claude`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({system:sys,user:`Acoustic analysis:${bns}\n\n════ ACOUSTIC PROFILE ════\n${profile}\n\nWhich Belgian bird? Return JSON array.`})});
+  if(!res.ok){const e=await res.json().catch(()=>({}));throw new Error(e.detail||`API-fout ${res.status}`);}
+  const data=await res.json(), text=data.content?.[0]?.text||'';
+  const am=text.match(/\[[\s\S]*\]/), om=text.match(/\{[\s\S]*\}/);
   let birds;
-  if (arrMatch) {
-    birds = JSON.parse(arrMatch[0]);
-    if (!Array.isArray(birds)) birds = [birds];
-  } else if (objMatch) {
-    const obj = JSON.parse(objMatch[0]);
-    if (obj.error === 'no_bird') throw new Error(obj.message_nl || 'Geen vogel herkend.');
-    birds = [obj];
-  } else {
-    throw new Error('Geen geldig antwoord van Claude.');
-  }
-
-  if (birds.length === 1 && birds[0].error === 'no_bird') {
-    throw new Error(birds[0].message_nl || 'Geen vogel herkend.');
-  }
-
-  const required = ['common_name_nl','common_name_en','scientific_name','confidence','rarity','fun_fact_nl'];
-  birds = birds.filter(b => required.every(k => k in b));
-  if (birds.length === 0) throw new Error('Claude herkende geen duidelijke vogel in de opname.');
-
-  birds.forEach(b => {
-    if (!['common','uncommon','rare','legendary'].includes(b.rarity)) b.rarity = 'common';
-    b.confidence = Math.min(1, Math.max(0, Number(b.confidence) || 0));
-  });
+  if(am){birds=JSON.parse(am[0]);if(!Array.isArray(birds))birds=[birds];}
+  else if(om){const o=JSON.parse(om[0]);if(o.error==='no_bird')throw new Error(o.message_nl||'Geen vogel herkend.');birds=[o];}
+  else throw new Error('Geen geldig antwoord van Claude.');
+  if(birds.length===1&&birds[0].error==='no_bird')throw new Error(birds[0].message_nl||'Geen vogel herkend.');
+  birds=birds.filter(b=>['common_name_nl','common_name_en','scientific_name','confidence','rarity','fun_fact_nl'].every(k=>k in b));
+  if(!birds.length)throw new Error('Claude herkende geen vogel.');
+  birds.forEach(b=>{if(!['common','uncommon','rare','legendary'].includes(b.rarity))b.rarity='common';b.confidence=Math.min(1,Math.max(0,Number(b.confidence)||0));});
   return birds;
 }
 
-/* ══════════════════════════════════════════════════════════════
-   WIKIPEDIA API
-══════════════════════════════════════════════════════════════ */
-async function fetchWikipediaImage(englishName) {
-  if (!englishName) return null;
-  const encoded = encodeURIComponent(englishName.replace(/ /g, '_'));
+/* ══════════════════════════════════════════════════════════
+   WIKIPEDIA
+══════════════════════════════════════════════════════════ */
+async function fetchWikipediaImage(en) {
+  if(!en) return null;
   try {
-    const res = await fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encoded}`);
-    if (!res.ok) return null;
-    const data = await res.json();
-    return data.thumbnail?.source || data.originalimage?.source || null;
-  } catch { return null; }
+    const r=await fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(en.replace(/ /g,'_'))}`);
+    if(!r.ok) return null;
+    const d=await r.json(); return d.thumbnail?.source||d.originalimage?.source||null;
+  } catch{return null;}
 }
 
-/* ══════════════════════════════════════════════════════════════
+/* ══════════════════════════════════════════════════════════
    RESULT SCREEN
-══════════════════════════════════════════════════════════════ */
+══════════════════════════════════════════════════════════ */
 function showResult(bird) {
-  const alreadyCaught = collection.some(b => b.scientific_name === bird.scientific_name);
-
-  const img = document.getElementById('result-image');
-  const placeholder = document.getElementById('result-image-placeholder');
-  if (bird.image_url) {
-    img.src = bird.image_url;
-    img.style.display = 'block';
-    placeholder.style.display = 'none';
-  } else {
-    img.style.display = 'none';
-    placeholder.style.display = 'flex';
-  }
-
-  document.getElementById('result-name-nl').textContent  = bird.common_name_nl;
-  document.getElementById('result-name-sci').textContent = bird.scientific_name;
-  document.getElementById('result-name-en').textContent  = bird.common_name_en;
-
-  const rarityBadge = document.getElementById('result-rarity-badge');
-  rarityBadge.className = 'rarity-badge rarity-' + bird.rarity;
-  rarityBadge.textContent = rarityLabel(bird.rarity);
-
-  const pct = Math.round(bird.confidence * 100);
-  document.getElementById('conf-pct').textContent = pct + '%';
-  const fill = document.getElementById('conf-fill');
-  fill.style.width = '0%';
-  fill.className = 'confidence-bar-fill ' + (pct >= 80 ? 'conf-green' : pct >= 60 ? 'conf-orange' : 'conf-red');
-  setTimeout(() => { fill.style.width = pct + '%'; }, 80);
-
-  const reasoningHtml = bird.reasoning
-    ? `<div style="margin-top:8px;font-size:11px;color:var(--text3);border-top:1px solid var(--sep);padding-top:8px">🔍 ${escHtml(bird.reasoning)}</div>`
-    : '';
-  document.getElementById('result-fun-fact').innerHTML =
-    `<span class="fun-fact-icon">💡</span>${escHtml(bird.fun_fact_nl)}${reasoningHtml}`;
-
-  const alreadyEl = document.getElementById('result-already');
-  const catchBtn  = document.getElementById('btn-catch');
-  if (alreadyCaught) {
-    alreadyEl.classList.add('show');
-    catchBtn.textContent = '✓ Al gevangen!';
-    catchBtn.classList.add('already');
-  } else {
-    alreadyEl.classList.remove('show');
-    catchBtn.textContent = '🎯 Vangen!';
-    catchBtn.classList.remove('already');
-  }
-
+  const caught=collection.some(b=>b.scientific_name===bird.scientific_name);
+  const img=document.getElementById('result-image'), ph=document.getElementById('result-image-placeholder');
+  if(bird.image_url){img.src=bird.image_url;img.style.display='block';ph.style.display='none';}
+  else{img.style.display='none';ph.style.display='flex';}
+  document.getElementById('result-name-nl').textContent=bird.common_name_nl;
+  document.getElementById('result-name-sci').textContent=bird.scientific_name;
+  document.getElementById('result-name-en').textContent=bird.common_name_en;
+  const rb=document.getElementById('result-rarity-badge'); rb.className='rarity-badge rarity-'+bird.rarity; rb.textContent=rarityLabel(bird.rarity);
+  const pct=Math.round(bird.confidence*100);
+  document.getElementById('conf-pct').textContent=pct+'%';
+  const fill=document.getElementById('conf-fill'); fill.style.width='0%';
+  fill.className='confidence-bar-fill '+(pct>=80?'conf-green':pct>=60?'conf-orange':'conf-red');
+  setTimeout(()=>{fill.style.width=pct+'%';},80);
+  document.getElementById('result-fun-fact').innerHTML=`<span>💡</span> ${escHtml(bird.fun_fact_nl)}${bird.reasoning?`<div style="margin-top:8px;font-size:11px;color:var(--text2);border-top:1px solid #e0e5ef;padding-top:8px">🔍 ${escHtml(bird.reasoning)}</div>`:''}`;
+  const ae=document.getElementById('result-already'), cb=document.getElementById('btn-catch');
+  if(caught){ae.classList.add('show');cb.textContent='✓ Al gevangen!';cb.classList.add('already');}
+  else{ae.classList.remove('show');cb.textContent='🎯 Vangen!';cb.classList.remove('already');}
   showScreen('result');
-  hintEl.textContent = 'Tik om op te nemen\nMax. 20 seconden';
+  hintEl.textContent='Tik om op te nemen Max. 20 seconden';
 }
 
-document.getElementById('btn-again').addEventListener('click', () => showScreen('record'));
+document.getElementById('btn-again').addEventListener('click',()=>showScreen('record'));
 
-document.getElementById('btn-catch').addEventListener('click', async () => {
-  if (!lastResult) return;
-  const alreadyCaught = collection.some(b => b.scientific_name === lastResult.scientific_name);
-  if (alreadyCaught) { showToast('Je hebt deze vogel al gevangen!'); return; }
-
-  let location = 'Onbekend';
-  try {
-    const pos = await new Promise((res, rej) =>
-      navigator.geolocation.getCurrentPosition(res, rej, { timeout: 4000 }));
-    const { latitude: lat, longitude: lon } = pos.coords;
-    const geoRes = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json`).catch(() => null);
-    if (geoRes && geoRes.ok) {
-      const geoData = await geoRes.json();
-      location = geoData.address?.city || geoData.address?.town || geoData.address?.village || 'Onbekend';
-    }
-  } catch {}
-
-  const entry = { ...lastResult, caught_at: new Date().toISOString(), location };
-  collection.push(entry);
+document.getElementById('btn-catch').addEventListener('click',async()=>{
+  if(!lastResult) return;
+  if(collection.some(b=>b.scientific_name===lastResult.scientific_name)){showToast('Al gevangen!');return;}
+  let location='Onbekend';
+  try{const pos=await new Promise((r,j)=>navigator.geolocation.getCurrentPosition(r,j,{timeout:4000}));const gr=await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${pos.coords.latitude}&lon=${pos.coords.longitude}&format=json`).catch(()=>null);if(gr&&gr.ok){const gd=await gr.json();location=gd.address?.city||gd.address?.town||gd.address?.village||'Onbekend';}}catch{}
+  collection.push({...lastResult,caught_at:new Date().toISOString(),location});
   saveCollection();
-
-  const catchBtn = document.getElementById('btn-catch');
-  catchBtn.textContent = '✓ Al gevangen!';
-  catchBtn.classList.add('already');
+  const cb=document.getElementById('btn-catch'); cb.textContent='✓ Al gevangen!'; cb.classList.add('already');
   document.getElementById('result-already').classList.add('show');
-  showCatchAnim(lastResult.common_name_nl);
+  const anim=document.getElementById('catch-anim');
+  document.getElementById('catch-anim-name').textContent=lastResult.common_name_nl+' gevangen!';
+  anim.classList.add('show'); setTimeout(()=>anim.classList.remove('show'),2000);
 });
 
-function showCatchAnim(name) {
-  const anim = document.getElementById('catch-anim');
-  document.getElementById('catch-anim-name').textContent = name + ' gevangen!';
-  anim.classList.add('show');
-  setTimeout(() => anim.classList.remove('show'), 2000);
-}
-
-/* ══════════════════════════════════════════════════════════════
-   COLLECTION SCREEN
-══════════════════════════════════════════════════════════════ */
-function rarityLabel(r) {
-  return { common:'Gewoon', uncommon:'Ongewoon', rare:'Zeldzaam', legendary:'Legendarisch' }[r] || r;
-}
-function rarityOrder(r) {
-  return { legendary:0, rare:1, uncommon:2, common:3 }[r] ?? 4;
-}
-function rarityColor(r) {
-  return { common:'var(--text3)', uncommon:'var(--blue-lt)', rare:'#c084fc', legendary:'var(--gold)' }[r] || 'var(--text3)';
-}
+/* ══════════════════════════════════════════════════════════
+   COLLECTION
+══════════════════════════════════════════════════════════ */
+function rarityLabel(r){return{common:'Gewoon',uncommon:'Ongewoon',rare:'Zeldzaam',legendary:'Legendarisch'}[r]||r;}
 
 function renderCollection() {
-  const grid    = document.getElementById('bird-grid');
-  const empty   = document.getElementById('empty-state');
-  const countEl = document.getElementById('count-num');
+  const grid=document.getElementById('bird-grid'), empty=document.getElementById('empty-state');
+  const countEl=document.getElementById('count-num'), totalEl=document.getElementById('count-total');
+  const caughtSet=new Map(collection.map(b=>[b.scientific_name,b]));
+  const caught=collection.length;
+  countEl.textContent=caught; if(totalEl) totalEl.textContent=BIRDS_DEX.length;
+  grid.innerHTML='';
 
-  countEl.textContent = collection.length;
-  grid.innerHTML = '';
-
-  // Filter by search query
-  let filtered = collection;
-  if (searchQuery) {
-    filtered = collection.filter(b =>
-      b.common_name_nl?.toLowerCase().includes(searchQuery) ||
-      b.common_name_en?.toLowerCase().includes(searchQuery) ||
-      b.scientific_name?.toLowerCase().includes(searchQuery)
-    );
+  // Filter
+  let filtered=BIRDS_DEX;
+  if(searchQuery){
+    filtered=BIRDS_DEX.filter(b=>b.nl.toLowerCase().includes(searchQuery)||b.en.toLowerCase().includes(searchQuery)||b.sci.toLowerCase().includes(searchQuery));
   }
 
-  if (collection.length === 0 && !searchQuery) {
-    empty.classList.add('show');
-    grid.style.display = 'none';
-    return;
-  }
-  empty.classList.remove('show');
-  grid.style.display = 'grid';
+  if(caught===0&&!searchQuery){empty.classList.add('show');grid.style.display='none';return;}
+  empty.classList.remove('show'); grid.style.display='grid';
 
-  if (filtered.length === 0) {
-    grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:40px 20px;color:var(--text2);font-size:14px">Geen vogels gevonden voor "<strong>${escHtml(searchQuery)}</strong>"</div>`;
-    return;
-  }
+  if(filtered.length===0){grid.innerHTML=`<div style="grid-column:1/-1;text-align:center;padding:40px 16px;color:var(--text2);font-size:14px">Geen vogels gevonden voor "<strong>${escHtml(searchQuery)}</strong>"</div>`;return;}
 
   // Group by rarity
-  const groups = { legendary:[], rare:[], uncommon:[], common:[] };
-  filtered.forEach(b => {
-    const r = b.rarity in groups ? b.rarity : 'common';
-    groups[r].push(b);
-  });
+  const groups={legendary:[],rare:[],uncommon:[],common:[]};
+  filtered.forEach(b=>{if(b.rarity in groups)groups[b.rarity].push(b);});
 
-  const rarityMeta = {
-    legendary: { label:'Legendarisch', dot:'dot-legendary', dotColor:'var(--gold)' },
-    rare:      { label:'Zeldzaam',      dot:'dot-rare',      dotColor:'#c084fc' },
-    uncommon:  { label:'Ongewoon',      dot:'dot-uncommon',  dotColor:'var(--blue-lt)' },
-    common:    { label:'Gewoon',        dot:'dot-common',    dotColor:'var(--text3)' },
-  };
+  const sections=[
+    {key:'common',    label:'Common'},
+    {key:'uncommon',  label:'Uncommon'},
+    {key:'rare',      label:'Rare'},
+    {key:'legendary', label:'Legendary'},
+  ];
 
-  ['legendary','rare','uncommon','common'].forEach(rarity => {
-    const birds = groups[rarity];
-    if (birds.length === 0) return;
+  // Also add "not found" section with remaining uncaught birds
+  // We'll show caught birds under their rarity, and not-caught birds as locked cards
 
-    const meta = rarityMeta[rarity];
+  sections.forEach(({key,label})=>{
+    const birds=groups[key]; if(!birds.length) return;
+    const caughtBirds=birds.filter(b=>caughtSet.has(b.sci));
+    const lockedBirds=birds.filter(b=>!caughtSet.has(b.sci));
 
-    // Section header (spans full grid width)
-    const header = document.createElement('div');
-    header.className = 'rarity-section-header';
-    header.style.gridColumn = '1 / -1';
-    header.innerHTML = `<span class="dot" style="background:${meta.dotColor}"></span>${meta.label} (${birds.length})`;
-    grid.appendChild(header);
+    if(caughtBirds.length>0){
+      const hdr=document.createElement('div'); hdr.className='rarity-section-label';
+      hdr.style.gridColumn='1 / -1'; hdr.textContent=label;
+      grid.appendChild(hdr);
+      caughtBirds.forEach(bird=>{
+        const entry=caughtSet.get(bird.sci);
+        const date=new Date(entry.caught_at).toLocaleDateString('nl-NL',{day:'numeric',month:'short'});
+        const card=document.createElement('div'); card.className='bird-card caught';
+        card.innerHTML=`<div class="bird-card-img">${entry.image_url?`<img src="${escHtml(entry.image_url)}" alt="${escHtml(bird.nl)}" loading="lazy">`:''}</div><div class="bird-card-body"><div class="bird-card-name">${escHtml(bird.nl)}</div><div class="bird-card-date">${date}</div></div>`;
+        grid.appendChild(card);
+      });
+    }
 
-    birds.forEach(bird => {
-      const date = new Date(bird.caught_at).toLocaleDateString('nl-NL', { day:'numeric', month:'short' });
-      const card = document.createElement('div');
-      card.className = 'bird-card';
-      card.innerHTML = `
-        <div class="bird-card-img">
-          ${bird.image_url
-            ? `<img src="${escHtml(bird.image_url)}" alt="${escHtml(bird.common_name_nl)}" loading="lazy">`
-            : birdPlaceholder()}
-        </div>
-        <div class="bird-card-body">
-          <div class="bird-card-name">${escHtml(bird.common_name_nl)}</div>
-          <div class="bird-card-meta">
-            <div class="bird-card-date">${date}</div>
-          </div>
-        </div>`;
-      grid.appendChild(card);
-    });
+    if(lockedBirds.length>0){
+      const hdr2=document.createElement('div'); hdr2.className='rarity-section-label';
+      hdr2.style.gridColumn='1 / -1';
+      hdr2.textContent=caughtBirds.length>0?`${label} — not found`:'not found';
+      grid.appendChild(hdr2);
+      lockedBirds.forEach(bird=>{
+        const card=document.createElement('div'); card.className='bird-card locked';
+        card.innerHTML=`<div class="bird-card-img"><div class="lock-icon">🔒</div></div><div class="bird-card-body"><div class="bird-card-name">${escHtml(bird.nl)}</div></div>`;
+        grid.appendChild(card);
+      });
+    }
   });
 }
 
-function birdPlaceholder() {
-  return `<svg viewBox="0 0 64 64" fill="none" style="width:40px;height:40px;opacity:.2">
-    <ellipse cx="32" cy="40" rx="18" ry="12" fill="#6699cc"/>
-    <circle cx="44" cy="24" r="10" fill="#6699cc"/>
-    <path d="M54 24 L62 20 L56 28Z" fill="#f4a261"/>
-  </svg>`;
-}
+function birdPlaceholder(){return`<svg viewBox="0 0 64 64" fill="none" style="width:36px;height:36px;opacity:.25"><ellipse cx="32" cy="40" rx="18" ry="12" fill="#6699cc"/><circle cx="44" cy="24" r="10" fill="#6699cc"/><path d="M54 24 L62 20 L56 28Z" fill="#f4a261"/></svg>`;}
+function escHtml(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 
-function escHtml(s) {
-  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-}
+/* ══════════════════════════════════════════════════════════
+   STATS
+══════════════════════════════════════════════════════════ */
+function renderStats(){
+  document.getElementById('stat-total').textContent=collection.length;
+  const unique=new Set(collection.map(b=>b.scientific_name)).size;
+  document.getElementById('stat-unique').textContent=unique;
+  const order=['legendary','rare','uncommon','common'];
+  let rarest=null; for(const r of order){rarest=collection.find(b=>b.rarity===r);if(rarest)break;}
+  document.getElementById('stat-rarest').textContent=rarest?rarest.common_name_nl:'—';
 
-/* ══════════════════════════════════════════════════════════════
-   STATS SCREEN
-══════════════════════════════════════════════════════════════ */
-const TOTAL_DEX_BIRDS = 60;
+  const pct=Math.min(100,Math.round((unique/BIRDS_DEX.length)*100));
+  document.getElementById('progress-pct').textContent=pct+'%';
+  document.getElementById('prog-caught').textContent=unique;
+  const ring=document.getElementById('progress-ring');
+  if(ring) ring.style.strokeDashoffset=182.2*(1-pct/100);
 
-function renderStats() {
-  document.getElementById('stat-total').textContent = collection.length;
-  const unique = new Set(collection.map(b => b.scientific_name)).size;
-  document.getElementById('stat-unique').textContent = unique;
-
-  // Rarest
-  const order = ['legendary','rare','uncommon','common'];
-  let rarest = null;
-  for (const r of order) { rarest = collection.find(b => b.rarity === r); if (rarest) break; }
-  document.getElementById('stat-rarest').textContent = rarest ? rarest.common_name_nl : '—';
-
-  // Completion progress ring
-  const pct = Math.min(100, Math.round((unique / TOTAL_DEX_BIRDS) * 100));
-  document.getElementById('progress-pct').textContent = pct + '%';
-  document.getElementById('prog-caught').textContent = unique;
-  const circumference = 2 * Math.PI * 33; // r=33
-  const ring = document.getElementById('progress-ring');
-  if (ring) {
-    ring.style.strokeDashoffset = circumference * (1 - pct / 100);
-  }
-
-  // Bar chart
-  const counts = { common:0, uncommon:0, rare:0, legendary:0 };
-  collection.forEach(b => { if (b.rarity in counts) counts[b.rarity]++; });
-  const maxCount = Math.max(1, ...Object.values(counts));
-  ['common','uncommon','rare','legendary'].forEach(r => {
-    document.getElementById('bar-' + r).style.width = (counts[r] / maxCount * 100) + '%';
-    document.getElementById('cnt-' + r).textContent = counts[r];
+  const counts={common:0,uncommon:0,rare:0,legendary:0};
+  collection.forEach(b=>{if(b.rarity in counts)counts[b.rarity]++;});
+  const mx=Math.max(1,...Object.values(counts));
+  ['common','uncommon','rare','legendary'].forEach(r=>{
+    document.getElementById('bar-'+r).style.width=(counts[r]/mx*100)+'%';
+    document.getElementById('cnt-'+r).textContent=counts[r];
   });
 
-  // Recent
-  const recentList  = document.getElementById('recent-list');
-  const recentEmpty = document.getElementById('recent-empty');
-  recentList.innerHTML = '';
-  const recent = [...collection].sort((a,b) => new Date(b.caught_at) - new Date(a.caught_at)).slice(0, 5);
-
-  if (recent.length === 0) {
-    recentEmpty.style.display = 'block';
-  } else {
-    recentEmpty.style.display = 'none';
-    recent.forEach(bird => {
-      const date = new Date(bird.caught_at).toLocaleDateString('nl-NL', { day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' });
-      const item = document.createElement('div');
-      item.className = 'recent-item';
-      item.innerHTML = `
-        <div class="recent-thumb">
-          ${bird.image_url ? `<img src="${escHtml(bird.image_url)}" alt="" loading="lazy">` : birdPlaceholder()}
-        </div>
-        <div style="flex:1;min-width:0">
-          <div class="recent-name">${escHtml(bird.common_name_nl)}</div>
-          <div class="recent-meta">${date} · ${escHtml(bird.location || 'Onbekend')}</div>
-        </div>
-        <span class="rarity-badge rarity-${bird.rarity}" style="font-size:10px;padding:2px 8px;flex-shrink:0">${rarityLabel(bird.rarity)}</span>`;
-      recentList.appendChild(item);
+  const rl=document.getElementById('recent-list'), re=document.getElementById('recent-empty');
+  rl.innerHTML='';
+  const recent=[...collection].sort((a,b)=>new Date(b.caught_at)-new Date(a.caught_at)).slice(0,5);
+  if(!recent.length){re.style.display='block';}
+  else{
+    re.style.display='none';
+    recent.forEach(bird=>{
+      const date=new Date(bird.caught_at).toLocaleDateString('nl-NL',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});
+      const item=document.createElement('div'); item.className='recent-item';
+      item.innerHTML=`<div class="recent-thumb">${bird.image_url?`<img src="${escHtml(bird.image_url)}" alt="" loading="lazy">`:''}</div><div style="flex:1;min-width:0"><div class="recent-name">${escHtml(bird.common_name_nl)}</div><div class="recent-meta">${date} · ${escHtml(bird.location||'Onbekend')}</div></div><span class="rarity-badge rarity-${bird.rarity}" style="flex-shrink:0;font-size:10px;padding:2px 8px">${rarityLabel(bird.rarity)}</span>`;
+      rl.appendChild(item);
     });
   }
 }
 
-/* ══════════════════════════════════════════════════════════════
+/* ══════════════════════════════════════════════════════════
    LOADING & TOAST
-══════════════════════════════════════════════════════════════ */
-function showLoading(on) {
-  loadingOverlay.classList.toggle('show', on);
-}
-
-let toastTimer = null;
-function showToast(msg) {
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.classList.add('show');
-  clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => t.classList.remove('show'), 3200);
-}
+══════════════════════════════════════════════════════════ */
+function showLoading(on){loadingOverlay.classList.toggle('show',on);}
+let toastTimer=null;
+function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove('show'),3200);}
 </script>
 </body>
 </html>
