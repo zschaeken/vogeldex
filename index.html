@@ -1130,9 +1130,9 @@ function buildAcousticProfile(log) {
 }
 
 // URL of the local BirdNET server (Step 2 in the guide)
-// Switch to your production URL before deploying, e.g.:
-// const BIRDNET_SERVER = 'https://vogeldex-api.railway.app';
-const BIRDNET_SERVER = 'http://localhost:8765';
+const BIRDNET_SERVER = window.location.hostname === 'localhost'
+  ? 'http://localhost:8765'
+  : 'https://vogeldex-production.up.railway.app';
 
 async function queryBirdNET(blob) {
   if (!blob || !birdnetOnline) return null;
