@@ -1,12 +1,13 @@
 """
-VogelDex BirdNET API server
-----------------------------
+VogelDex BirdNET + Claude API server
+--------------------------------------
 Local:      uvicorn server:app --port 8765 --reload
 Production: uvicorn server:app --host 0.0.0.0 --port $PORT
 """
-import datetime, os, tempfile
-from fastapi import FastAPI, UploadFile, File, Query
+import datetime, os, tempfile, httpx
+from fastapi import FastAPI, UploadFile, File, Query, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
 from birdnetlib import Recording
 from birdnetlib.analyzer import Analyzer
 from pydub import AudioSegment
@@ -18,10 +19,11 @@ if os.path.exists(_ffmpeg):
     AudioSegment.converter = _ffmpeg
     AudioSegment.ffmpeg    = _ffmpeg
 
-# ── CORS: allow all origins in dev, restrict to frontend URL in prod ─────────
-ALLOWED_ORIGINS = os.getenv("ALLOWED_ORIGINS", "*").split(",")
+# ── Config ───────────────────────────────────────────────────────────────────
+ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY", "")
+ALLOWED_ORIGINS   = os.getenv("ALLOWED_ORIGINS", "*").split(",")
 
-app = FastAPI(title="VogelDex BirdNET API", version="1.0.0")
+app = FastAPI(title="VogelDex API", version="1.0.0")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=ALLOWED_ORIGINS,
@@ -36,20 +38,25 @@ print("BirdNET ready ✓")
 
 
 def day_to_week48(day_of_year: int) -> int:
-    """Convert day-of-year (1–366) to BirdNET week scale (1–48)."""
     return max(1, min(48, round(day_of_year / 365 * 48)))
 
 
+# ════════════════════════════════════════════════════════════════
+#  HEALTH
+# ════════════════════════════════════════════════════════════════
 @app.get("/health")
 async def health():
     return {"status": "ok", "model": "BirdNET-Analyzer"}
 
 
+# ════════════════════════════════════════════════════════════════
+#  BIRDNET — audio identification
+# ════════════════════════════════════════════════════════════════
 @app.post("/identify")
 async def identify(
     audio: UploadFile = File(...),
-    lat:   float = Query(50.85, description="Latitude (default: Brussels)"),
-    lon:   float = Query(4.35,  description="Longitude (default: Brussels)"),
+    lat:   float = Query(50.85),
+    lon:   float = Query(4.35),
 ):
     week_48 = day_to_week48(datetime.date.today().timetuple().tm_yday)
     suffix  = os.path.splitext(audio.filename or "")[1] or ".webm"
@@ -60,7 +67,6 @@ async def identify(
 
     wav_path = tmp_path
     try:
-        # Convert browser audio (webm/ogg/mp4) → 48kHz mono WAV for BirdNET
         if suffix in (".webm", ".ogg", ".mp4", ".m4a"):
             wav_path = tmp_path.replace(suffix, ".wav")
             try:
@@ -70,7 +76,6 @@ async def identify(
                 print(f"[ffmpeg] conversion failed ({e}), trying raw file")
                 wav_path = tmp_path
 
-        # Run BirdNET
         recording = Recording(
             analyzer, wav_path,
             lat=lat, lon=lon,
@@ -79,10 +84,8 @@ async def identify(
             overlap=1.5,
         )
         recording.analyze()
-        print(f"[BirdNET] {len(recording.detections)} detections  "
-              f"lat={lat:.2f} lon={lon:.2f} week48={week_48}")
+        print(f"[BirdNET] {len(recording.detections)} detections  lat={lat:.2f} lon={lon:.2f}")
 
-        # Aggregate: max confidence + detection count per species
         best: dict[str, dict] = {}
         for det in recording.detections:
             sci  = det["scientific_name"]
@@ -100,10 +103,6 @@ async def identify(
                      key=lambda x: (x["confidence"], x["detections"]),
                      reverse=True)[:6]
 
-        for r in top:
-            print(f"  {r['confidence']:.2f}  {r['common_name']}  "
-                  f"({r['detections']} windows)")
-
         return {
             "results": [{
                 "label":           f"{r['scientific_name']}_{r['common_name']}",
@@ -114,7 +113,42 @@ async def identify(
             } for r in top],
             "meta": {"week_48": week_48, "lat": lat, "lon": lon},
         }
-
     finally:
         if os.path.exists(tmp_path):  os.unlink(tmp_path)
         if wav_path != tmp_path and os.path.exists(wav_path): os.unlink(wav_path)
+
+
+# ════════════════════════════════════════════════════════════════
+#  CLAUDE — proxied so API key stays server-side
+# ════════════════════════════════════════════════════════════════
+class ClaudeRequest(BaseModel):
+    system: str
+    user:   str
+
+@app.post("/claude")
+async def claude_proxy(req: ClaudeRequest):
+    if not ANTHROPIC_API_KEY:
+        raise HTTPException(503, "ANTHROPIC_API_KEY not configured on server")
+
+    payload = {
+        "model":      "claude-sonnet-4-20250514",
+        "max_tokens": 900,
+        "system":     req.system,
+        "messages":   [{"role": "user", "content": req.user}],
+    }
+
+    async with httpx.AsyncClient(timeout=30) as client:
+        resp = await client.post(
+            "https://api.anthropic.com/v1/messages",
+            headers={
+                "x-api-key":         ANTHROPIC_API_KEY,
+                "anthropic-version": "2023-06-01",
+                "content-type":      "application/json",
+            },
+            json=payload,
+        )
+
+    if not resp.is_success:
+        raise HTTPException(resp.status_code, resp.text)
+
+    return resp.json()

@@ -50,26 +50,7 @@
     .screen.active { display: block; }
 
     /* ── API Key banner ── */
-    #api-banner {
-      background: var(--accent);
-      color: #fff;
-      padding: 10px 16px;
-      display: flex; align-items: center; gap: 8px;
-      font-size: 13px; font-weight: 500;
-      flex-shrink: 0;
-    }
-    #api-banner.hidden { display: none; }
-    #api-key-input {
-      flex: 1; border: none; border-radius: 8px;
-      padding: 7px 10px; font-size: 13px;
-      background: rgba(255,255,255,.25); color: #fff; outline: none;
-    }
-    #api-key-input::placeholder { color: rgba(255,255,255,.65); }
-    #api-key-save {
-      background: rgba(0,0,0,.2); color: #fff;
-      border-radius: 8px; padding: 6px 14px;
-      font-weight: 600; font-size: 13px;
-    }
+    #api-banner { display: none; }
 
     /* ── Tab bar (iOS style) ── */
     #bottom-nav {
@@ -696,40 +677,14 @@
 /* ══════════════════════════════════════════════════════════════
    STATE & STORAGE
 ══════════════════════════════════════════════════════════════ */
-const LS_KEY_API   = 'vogeldex_api_key';
 const LS_KEY_BIRDS = 'vogeldex_collection';
 
-let apiKey     = localStorage.getItem(LS_KEY_API) || '';
 let collection = JSON.parse(localStorage.getItem(LS_KEY_BIRDS) || '[]');
-let lastResult = null;   // {common_name_nl, common_name_en, scientific_name, confidence, rarity, fun_fact_nl, image_url}
+let lastResult = null;
 
 function saveCollection() {
   localStorage.setItem(LS_KEY_BIRDS, JSON.stringify(collection));
 }
-
-/* ══════════════════════════════════════════════════════════════
-   API KEY UI
-══════════════════════════════════════════════════════════════ */
-const apiBanner  = document.getElementById('api-banner');
-const apiInput   = document.getElementById('api-key-input');
-const apiSaveBtn = document.getElementById('api-key-save');
-
-function initApiUI() {
-  if (apiKey) {
-    apiBanner.classList.add('hidden');
-  } else {
-    apiBanner.classList.remove('hidden');
-  }
-}
-
-apiSaveBtn.addEventListener('click', () => {
-  const val = apiInput.value.trim();
-  if (!val) { showToast('Voer eerst een API-sleutel in.'); return; }
-  apiKey = val;
-  localStorage.setItem(LS_KEY_API, apiKey);
-  apiBanner.classList.add('hidden');
-  showToast('API-sleutel opgeslagen ✓');
-});
 
 /* ══════════════════════════════════════════════════════════════
    NAVIGATION
@@ -822,11 +777,6 @@ recordBtn.addEventListener('click', handleRecordClick);
 async function handleRecordClick() {
   if (isRecording) {
     stopRecording();
-    return;
-  }
-  if (!apiKey) {
-    apiBanner.classList.remove('hidden');
-    showToast('Voer eerst je API-sleutel in.');
     return;
   }
   await startRecording();
@@ -1404,30 +1354,15 @@ ${profile}
 
 Based on this data, which bird(s) from Belgium/Netherlands best match? Return a JSON array.`;
 
-  const body = {
-    model: 'claude-sonnet-4-20250514',
-    max_tokens: 900,
-    system: systemPrompt,
-    messages: [{
-      role: 'user',
-      content: profileText
-    }]
-  };
-
-  const res = await fetch('https://api.anthropic.com/v1/messages', {
+  const res = await fetch(`${BIRDNET_SERVER}/claude`, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-api-key': apiKey,
-      'anthropic-version': '2023-06-01',
-      'anthropic-dangerous-direct-browser-access': 'true'
-    },
-    body: JSON.stringify(body)
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ system: systemPrompt, user: profileText })
   });
 
   if (!res.ok) {
     const errData = await res.json().catch(() => ({}));
-    throw new Error(errData.error?.message || `API-fout ${res.status}`);
+    throw new Error(errData.detail || `API-fout ${res.status}`);
   }
 
   const data = await res.json();
@@ -1731,7 +1666,7 @@ function showToast(msg) {
 /* ══════════════════════════════════════════════════════════════
    INIT
 ══════════════════════════════════════════════════════════════ */
-initApiUI();
+// API key handled server-side
 </script>
 </body>
 </html>
